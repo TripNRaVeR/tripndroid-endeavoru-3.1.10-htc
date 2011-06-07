@@ -122,6 +122,9 @@ o	"ver": The number of times since boot that the rcutw writer task
 	has changed the structure visible to readers.
 
 o	"tfle": If non-zero, indicates that the "torture freelist"
+		"rcu_bh_expedited": rcu_read_lock_bh(), rcu_read_unlock_bh(),
+			and synchronize_rcu_bh_expedited().
+
 	containing structure to be placed into the "rtc" area is empty.
 	This condition is important, since it can fool you into thinking
 	that RCU is working when it is not.  :-/
