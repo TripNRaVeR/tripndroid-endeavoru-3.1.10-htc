@@ -38,7 +38,7 @@
 #include "usb-wwan.h"
 #include <mach/board_htc.h>
 
-static int debug;
+static bool debug;
 
 void usb_wwan_dtr_rts(struct usb_serial_port *port, int on)
 {
