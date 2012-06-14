@@ -441,6 +441,7 @@ int tegra_thermal_device_register(struct tegra_thermal_device *device)
 		tegra_skin_device_register(device);
 #endif
 
+	register_pm_notifier(&tegra_thermal_nb);
 	return 0;
 }
 
