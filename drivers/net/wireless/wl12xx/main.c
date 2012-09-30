@@ -1297,6 +1297,21 @@ u8 wl12xx_open_count(struct wl1271 *wl)
 	return open_count;
 }
 
+static inline int wl12xx_running_vif_type(struct wl1271 *wl,
+					  enum nl80211_iftype iftype)
+{
+	struct wl12xx_vif *wlvif;
+
+	wl12xx_for_each_wlvif(wl, wlvif) {
+		struct ieee80211_vif *vif = wl12xx_wlvif_to_vif(wlvif);
+
+		if (iftype == ieee80211_vif_type_p2p(vif))
+			return 1;
+	}
+
+	return 0;
+}
+
 static int wl12xx_fetch_firmware(struct wl1271 *wl, bool plt)
 {
 	const struct firmware *fw;
@@ -4145,6 +4160,13 @@ static int wl1271_op_sched_scan_start(struct ieee80211_hw *hw,
 
 	if (unlikely(wl->state != WLCORE_STATE_ON)) {
 		ret = -EAGAIN;
+		goto out;
+	}
+
+	if (wl12xx_running_vif_type(wl, NL80211_IFTYPE_P2P_CLIENT)) {
+		ret = -EBUSY;
+		wl1271_debug(DEBUG_MAC80211, "blocking sched scan because "
+			     "p2p client is running");
 		goto out;
 	}
 
