@@ -336,6 +336,7 @@ static void ieee80211_restart_work(struct work_struct *work)
 
 	rtnl_lock();
 	ieee80211_scan_cancel(local);
+	ieee80211_work_purge_type(local, IEEE80211_WORK_REMAIN_ON_CHANNEL);
 	ieee80211_reconfig(local);
 	rtnl_unlock();
 }
