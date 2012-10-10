@@ -1143,6 +1143,37 @@ void ieee80211_work_init(struct ieee80211_local *local)
 	skb_queue_head_init(&local->work_skb_queue);
 }
 
+void ieee80211_work_purge_type(struct ieee80211_local *local,
+			       enum ieee80211_work_type type)
+{
+	struct ieee80211_work *wk;
+	bool cleanup = false;
+
+	mutex_lock(&local->mtx);
+	list_for_each_entry(wk, &local->work_list, list) {
+		if (wk->type != type)
+			continue;
+		cleanup = true;
+		wk->type = IEEE80211_WORK_ABORT;
+		wk->started = true;
+		wk->timeout = jiffies;
+	}
+	mutex_unlock(&local->mtx);
+
+	/* run cleanups etc. */
+	if (cleanup)
+		ieee80211_work_work(&local->work_work);
+
+	mutex_lock(&local->mtx);
+	list_for_each_entry(wk, &local->work_list, list) {
+		if (wk->type != type)
+			continue;
+		WARN_ON(1);
+		break;
+	}
+	mutex_unlock(&local->mtx);
+}
+
 void ieee80211_work_purge(struct ieee80211_sub_if_data *sdata)
 {
 	struct ieee80211_local *local = sdata->local;
