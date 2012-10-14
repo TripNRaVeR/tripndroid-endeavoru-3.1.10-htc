@@ -127,6 +127,10 @@ int wl1271_ps_elp_wakeup(struct wl1271 *wl)
 	if (!test_bit(WL1271_FLAG_IN_ELP, &wl->flags))
 		return 0;
 
+	/* If we have SDIO error - don't try to wakeup */
+	if (test_bit(WL1271_FLAG_IO_FAILED, &wl->flags))
+		return -EIO;
+
 	wl1271_debug(DEBUG_PSM, "waking up chip from elp");
 
 	/*
