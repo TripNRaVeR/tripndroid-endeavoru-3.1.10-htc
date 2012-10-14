@@ -1429,8 +1429,16 @@ void wl12xx_queue_recovery_work(struct wl1271 *wl)
 
 	/* Avoid a recursive recovery */
 	if (wl->state == WLCORE_STATE_ON) {
+		int ret;
+
 		wl->state = WLCORE_STATE_RESTARTING;
 		set_bit(WL1271_FLAG_RECOVERY_IN_PROGRESS, &wl->flags);
+
+		/* Call ELP wakeup to allow general recovery processing */
+		ret = wl1271_ps_elp_wakeup(wl);
+		if (ret < 0)
+			wl1271_error("FAILED wl1271_ps_elp_wakeup");
+
 		wlcore_disable_interrupts_nosync(wl);
 #ifdef CONFIG_HAS_WAKELOCK
 		/* give us a grace period for recovery */
