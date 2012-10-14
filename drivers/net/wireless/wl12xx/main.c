@@ -55,6 +55,9 @@
 #define WL12XX_CORE_DUMP_CHUNK_SIZE	(4 * PAGE_SIZE)
 #define WL12XX_CORE_DUMP_ENABLED	(false)
 
+#define WL1271_FW_ASSERT_POLL_COUNT	50
+#define WL1271_FW_ASSERT_TIMEOUT	100
+
 static struct conf_drv_settings default_conf = {
 	.sg = {
 		.params = {
@@ -1654,6 +1657,86 @@ static void wl12xx_print_recovery(struct wl1271 *wl)
 	wl1271_info("pc: 0x%x", pc);
 }
 
+static void wl12xx_trigger_fw_recovery(struct wl1271 *wl)
+{
+	int ret;
+	u16 poll_count = 0;
+	unsigned long timeout;
+	struct wl1271_partition_set part;
+	u32 part_mem3_base;
+
+	if (wl->watchdog_recovery ||
+	    test_bit(WL1271_FLAG_INTENDED_FW_RECOVERY, &wl->flags) ||
+	    test_bit(WL1271_FLAG_IO_FAILED, &wl->flags))
+		goto out;
+
+	/*
+	 * Map partition so we can write into FW Assert mem address -
+	 *  This is based on using WORK partition to ensure 'normal' operation
+	 *  and mapping assert address under mem3 part.
+	 */
+	part = wl12xx_part_table[PART_WORK];
+	part.mem3.start = WL12XX_FW_ASSERT_MEM_ADDR;
+	part.mem3.size  = sizeof(u32);
+
+	/* Base address for mem3 to be used in raw_write32 function */
+	part_mem3_base  = part.mem.size + part.reg.size + part.mem2.size;
+
+	ret = wl1271_set_partition(wl, &part);
+	if (ret < 0) {
+		wl1271_error("FW Assert set mem partition failed");
+		goto out;
+	}
+
+	ret = wl1271_raw_write32(wl, part_mem3_base,
+				 WL12XX_FW_ASSERT_MEM_DWORD);
+	if (ret < 0) {
+		wl1271_error("Write FW Assert Error");
+		goto out;
+	}
+
+	ret = wl1271_write32(wl, WL12XX_FW_ASSERT_INTR_LOW ?
+			     ACX_REG_INTERRUPT_TRIG : ACX_REG_INTERRUPT_TRIG_H,
+			     WL12XX_FW_ASSERT_INTR_TRIG);
+	if (ret < 0) {
+		wl1271_error("Write FW Assert Intr Trig Error");
+		goto out;
+	}
+
+	timeout = jiffies + msecs_to_jiffies(WL1271_FW_ASSERT_TIMEOUT);
+
+	while (!wl->watchdog_recovery) {
+		u32 intr;
+
+		ret = wl12xx_fw_status(wl, wl->fw_status);
+		if (ret < 0)
+			goto out;
+
+		intr = le32_to_cpu(wl->fw_status->intr);
+
+		if (intr & WL1271_ACX_INTR_WATCHDOG) {
+			wl1271_info(
+			"watchdog interrupt received! continue with recovery");
+			wl->watchdog_recovery = true;
+			break;
+		}
+
+		if (time_after(jiffies, timeout)) {
+			wl1271_error("FW Assert Watchdog timeout");
+			goto out;
+		}
+
+		poll_count++;
+		if (poll_count < WL1271_FW_ASSERT_POLL_COUNT)
+			udelay(10);
+		else
+			msleep(1);
+	}
+
+out:
+	return;
+}
+
 static void wl1271_recovery_work(struct work_struct *work)
 {
 	struct wl1271 *wl =
@@ -1666,7 +1749,18 @@ static void wl1271_recovery_work(struct work_struct *work)
 	if (wl->state == WLCORE_STATE_OFF || wl->plt)
 		goto out_unlock;
 
-	if (!test_bit(WL1271_FLAG_INTENDED_FW_RECOVERY, &wl->flags)) {
+	/*
+	 * We now first try to trigger FW side recovery and wait for recovery
+	 * watchdog. If successful, wl->watchdog_recovery will be set.
+	 */
+	wl12xx_trigger_fw_recovery(wl);
+
+	/*
+	 * Perform recovery ops with FW only if we got recovery watchdog
+	 * interrupt. Only this means that FW is still alive.
+	 */
+	if (!test_bit(WL1271_FLAG_INTENDED_FW_RECOVERY, &wl->flags) &&
+	    wl->watchdog_recovery) {
 		wl12xx_read_core_dump_panic(wl);
 		wl12xx_read_fwlog_panic(wl);
 		wl12xx_print_recovery(wl);
