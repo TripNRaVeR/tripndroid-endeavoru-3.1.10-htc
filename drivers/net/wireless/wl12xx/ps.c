@@ -76,8 +76,6 @@ out:
 	mutex_unlock(&wl->mutex);
 }
 
-#define ELP_ENTRY_DELAY  5
-
 /* Routines to toggle sleep mode while in ELP */
 void wl1271_ps_elp_sleep(struct wl1271 *wl)
 {
@@ -97,11 +95,7 @@ void wl1271_ps_elp_sleep(struct wl1271 *wl)
 			return;
 	}
 
-	if (wl->conf.conn.forced_ps)
-		timeout = ELP_ENTRY_DELAY;
-	else
-		timeout = wl->conf.conn.elp_timeout;
-
+	timeout = wl->conf.conn.elp_timeout;
 	ieee80211_queue_delayed_work(wl->hw, &wl->elp_work,
 				     msecs_to_jiffies(timeout));
 }
