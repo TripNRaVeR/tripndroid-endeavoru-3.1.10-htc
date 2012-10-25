@@ -413,6 +413,8 @@ int wl12xx_cmd_role_enable(struct wl1271 *wl, u8 *addr, u8 role_type,
 
 	wl1271_debug(DEBUG_CMD, "cmd role enable");
 
+	wl12xx_change_fw_if_needed(wl);
+
 	if (WARN_ON(*role_id != WL12XX_INVALID_ROLE_ID))
 		return -EBUSY;
 
@@ -454,6 +456,8 @@ int wl12xx_cmd_role_disable(struct wl1271 *wl, u8 *role_id)
 	int ret;
 
 	wl1271_debug(DEBUG_CMD, "cmd role disable");
+
+	wl12xx_change_fw_if_needed(wl);
 
 	if (WARN_ON(*role_id == WL12XX_INVALID_ROLE_ID))
 		return -ENOENT;
