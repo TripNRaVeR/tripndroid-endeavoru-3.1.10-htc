@@ -3135,6 +3135,11 @@ static int wl1271_op_add_interface(struct ieee80211_hw *hw,
 	u8 role_type;
 	bool booted = false;
 
+	if (wl->plt) {
+		wl1271_error("Adding Interface not allowed while in PLT mode");
+		return -EBUSY;
+	}
+
 	wl1271_debug(DEBUG_MAC80211, "mac80211 add interface type %d mac %pM",
 		     ieee80211_vif_type_p2p(vif), vif->addr);
 
