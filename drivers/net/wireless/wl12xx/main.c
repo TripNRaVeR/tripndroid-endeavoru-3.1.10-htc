@@ -2721,7 +2721,9 @@ static void wl1271_op_stop_locked(struct wl1271 *wl)
 		if (test_and_clear_bit(WL1271_FLAG_RECOVERY_IN_PROGRESS,
 				       &wl->flags))
 			wl1271_enable_interrupts(wl);
-
+		mutex_lock(&wl_list_mutex);
+		list_del(&wl->list);
+		mutex_unlock(&wl_list_mutex);
 		return;
 	}
 
