@@ -1653,8 +1653,18 @@ static void wl12xx_trigger_fw_recovery(struct wl1271 *wl)
 	int ret;
 	u16 poll_count = 0;
 	unsigned long timeout;
-	struct wl1271_partition_set part;
-	u32 part_mem3_base;
+
+	struct wl1271_partition_set part = {
+		.mem  = {
+			.start = WL12XX_FW_ASSERT_MEM_ADDR,
+			.size  = sizeof(u32)
+		},
+		.reg  = {0, 0},
+		.mem2 = {0, 0},
+		.mem3 = {0, 0}
+	};
+
+	struct wl1271_partition_set old_part;
 
 	if (wl->watchdog_recovery ||
 	    test_bit(WL1271_FLAG_INTENDED_FW_RECOVERY, &wl->flags) ||
@@ -1663,15 +1673,9 @@ static void wl12xx_trigger_fw_recovery(struct wl1271 *wl)
 
 	/*
 	 * Map partition so we can write into FW Assert mem address -
-	 *  This is based on using WORK partition to ensure 'normal' operation
-	 *  and mapping assert address under mem3 part.
+	 *  Save old partition so we can resume it afterwards
 	 */
-	part = wl12xx_part_table[PART_WORK];
-	part.mem3.start = WL12XX_FW_ASSERT_MEM_ADDR;
-	part.mem3.size  = sizeof(u32);
-
-	/* Base address for mem3 to be used in raw_write32 function */
-	part_mem3_base  = part.mem.size + part.reg.size + part.mem2.size;
+	old_part = wl->part;
 
 	ret = wl1271_set_partition(wl, &part);
 	if (ret < 0) {
@@ -1679,10 +1683,17 @@ static void wl12xx_trigger_fw_recovery(struct wl1271 *wl)
 		goto out;
 	}
 
-	ret = wl1271_raw_write32(wl, part_mem3_base,
-				 WL12XX_FW_ASSERT_MEM_DWORD);
+	ret = wl1271_write32(wl, WL12XX_FW_ASSERT_MEM_ADDR,
+			     WL12XX_FW_ASSERT_MEM_DWORD);
 	if (ret < 0) {
 		wl1271_error("Write FW Assert Error");
+		goto out;
+	}
+
+	/* Resume Normal Partition for the rest */
+	ret = wl1271_set_partition(wl, &old_part);
+	if (ret < 0) {
+		wl1271_error("FW Assert resume normal mem partition failed");
 		goto out;
 	}
 
