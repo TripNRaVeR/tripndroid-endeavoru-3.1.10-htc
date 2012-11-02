@@ -742,7 +742,8 @@ int wl12xx_cmd_role_start_ap(struct wl1271 *wl, struct wl12xx_vif *wlvif)
 	struct ieee80211_bss_conf *bss_conf = &vif->bss_conf;
 	int ret;
 
-	wl1271_debug(DEBUG_CMD, "cmd role start ap %d", wlvif->role_id);
+	wl1271_debug(DEBUG_CMD, "cmd role start ap %d ch %d",
+		     wlvif->role_id, wlvif->channel);
 
 	/* trying to use a non-hidden SSID without SSID IE */
 	if (wlvif->ssid_len == 0 && !bss_conf->hidden_ssid) {
