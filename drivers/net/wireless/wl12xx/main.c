@@ -3258,7 +3258,7 @@ static void __wl1271_op_remove_interface(struct wl1271 *wl,
 	if (wl->state == WLCORE_STATE_OFF)
 		return;
 
-	wl1271_info("down");
+	wl1271_info("removing interface %pM", vif->addr);
 
 	if (wl->scan.state != WL1271_SCAN_STATE_IDLE &&
 	    wl->scan_vif == vif) {
@@ -3404,6 +3404,9 @@ static int wl12xx_op_change_interface(struct ieee80211_hw *hw,
 {
 	struct wl1271 *wl = hw->priv;
 	int ret;
+
+	wl1271_debug(DEBUG_MAC80211, "mac80211 change interface: vif %p"
+		     " new_type %d p2p %d", vif, new_type, p2p);
 
 	set_bit(WL1271_FLAG_VIF_CHANGE_IN_PROGRESS, &wl->flags);
 	wl1271_op_remove_interface(hw, vif);
