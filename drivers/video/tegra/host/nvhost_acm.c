@@ -51,8 +51,13 @@ static void do_powergate_locked(int id)
 
 static void do_unpowergate_locked(int id)
 {
-	if (id != -1)
-		tegra_unpowergate_partition(id);
+	int ret = 0;
+	if (id != -1) {
+		ret = tegra_unpowergate_partition(id);
+		if (ret)
+			pr_err("%s: unpowergate failed: id = %d\n",
+					__func__, id);
+	}
 }
 
 static void do_module_reset_locked(struct nvhost_device *dev)
