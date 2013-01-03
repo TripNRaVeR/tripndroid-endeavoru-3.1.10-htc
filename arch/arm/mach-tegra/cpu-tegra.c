@@ -747,6 +747,7 @@ module_param(bthp_relax, uint, 0644);
 unsigned int mips_aggressive_factor = 6;
 module_param(mips_aggressive_factor, uint, 0644);
 EXPORT_SYMBOL (mips_aggressive_factor);
+#endif
 
 /* disable edp limitations */
 unsigned int no_edp_limit = 0;
@@ -758,6 +759,7 @@ unsigned int no_thermal_throttle_limit = 0;
 module_param(no_thermal_throttle_limit, uint, 0644);
 EXPORT_SYMBOL (no_thermal_throttle_limit);
 
+#if defined(CONFIG_BEST_TRADE_HOTPLUG)
 DEFINE_PER_CPU(unsigned long, last_freq_update_jiffies) = {0UL};
 
 struct {
