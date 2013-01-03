@@ -33,8 +33,14 @@ static struct kobj_attribute attrbute##_attr = {	\
 	.store	= attrbute##_store,			\
 }
 
+#ifdef CONFIG_TEGRA_CPU_AP33
+#define DEF_TARGET_FREQ (1500000)
+#define DEF_POKE_FREQ (1500000)
+#else
 #define DEF_TARGET_FREQ (1700000)
 #define DEF_POKE_FREQ (1700000)
+#endif
+
 #define DEF_POKE_MS (100)
 #define DEF_IDLE_MS (300)
 
@@ -133,12 +139,21 @@ static ssize_t media_boost_freq_store(struct kobject *kobj,
 		/* To get policy of current cpu */
 		cpufreq_get_policy(&policy, smp_processor_id());
 
+#ifdef CONFIG_TEGRA_CPU_AP33
+		/* update frequency qos request */
+		pm_qos_update_request(&poke_cpu_req, (s32)1500000);
+
+		/* update frequency request right now */
+		cpufreq_driver_target(&policy,
+				1500000, CPUFREQ_RELATION_L);
+#else
 		/* update frequency qos request */
 		pm_qos_update_request(&poke_cpu_req, (s32)1700000);
 
 		/* update frequency request right now */
 		cpufreq_driver_target(&policy,
 				1700000, CPUFREQ_RELATION_L);
+#endif
 
 		pr_info("[htc_perf] Orig user cap is %d,, media_boost is %c",
 				orig_user_cap, media_boost);
