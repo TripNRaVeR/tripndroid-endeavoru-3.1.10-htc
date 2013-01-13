@@ -616,9 +616,4 @@ int tegra_dc_unset_flip_callback(void);
 int tegra_dc_get_panel_sync_rate(void);
 int tegra_dc_get_frame_time(void);
 
-#ifdef trace_printk
-#undef trace_printk
-#endif
-#define trace_printk
-
 #endif
