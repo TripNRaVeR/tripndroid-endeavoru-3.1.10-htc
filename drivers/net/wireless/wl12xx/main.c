@@ -3443,8 +3443,10 @@ static int wl1271_join(struct wl1271 *wl, struct wl12xx_vif *wlvif,
 	if (set_assoc)
 		set_bit(WLVIF_FLAG_STA_ASSOCIATED, &wlvif->flags);
 
-	if (wl12xx_change_fw_if_needed(wl))
+	if (wl12xx_change_fw_if_needed(wl)) {
+		ret = -EBUSY;
 		goto out;
+	}
 
 	if (is_ibss)
 		ret = wl12xx_cmd_role_start_ibss(wl, wlvif);
