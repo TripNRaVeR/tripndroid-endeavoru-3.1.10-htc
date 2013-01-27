@@ -247,14 +247,8 @@ static void edp_update_limit(void)
 #endif
 }
 
-extern unsigned int no_edp_limit;
-
 static unsigned int edp_governor_speed(unsigned int requested_speed)
 {
-    /* ignore EDP (regulator max output) limitation */
-    if (unlikely(no_edp_limit))
-        return requested_speed;
-
 	if ((!edp_limit) || (requested_speed <= edp_limit))
 		return requested_speed;
 	else
@@ -748,11 +742,6 @@ unsigned int mips_aggressive_factor = 6;
 module_param(mips_aggressive_factor, uint, 0644);
 EXPORT_SYMBOL (mips_aggressive_factor);
 #endif
-
-/* disable edp limitations */
-unsigned int no_edp_limit = 0;
-module_param(no_edp_limit, uint, 0644);
-EXPORT_SYMBOL (no_edp_limit);
 
 /* disable thermal throttling limitations */
 unsigned int no_thermal_throttle_limit = 0;
