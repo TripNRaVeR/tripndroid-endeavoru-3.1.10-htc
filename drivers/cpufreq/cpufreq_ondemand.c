@@ -30,11 +30,9 @@
 #include <linux/cpu_debug.h>
 #include <linux/kthread.h>
 
-/* Google systrace just supports Interactive governor (option -l)
- * Just backport Interactive trace points for Ondemand governor use
- */
+
 #define CREATE_TRACE_POINTS
-#include <trace/events/cpufreq_interactive.h>
+#include <trace/events/cpufreq_ondemand.h>
 
 /*
  * dbs is used in this file as a shortform for demandbased switching
@@ -681,12 +679,12 @@ static void dbs_freq_increase(struct cpufreq_policy *p, unsigned int load, unsig
 	//else if (p->cur == p->max)
 	//	return;
 
-    trace_cpufreq_interactive_target (p->cpu, load, p->cur, freq);
+    trace_cpufreq_ondemand_target (p->cpu, load, p->cur, freq);
 
 	__cpufreq_driver_target(p, freq, dbs_tuners_ins.powersave_bias ?
 			CPUFREQ_RELATION_L : CPUFREQ_RELATION_H);
 
-    trace_cpufreq_interactive_up (p->cpu, freq, p->cur);
+    trace_cpufreq_ondemand_up (p->cpu, freq, p->cur);
 }
 
 static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
@@ -934,7 +932,7 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 	}
 
     if (time_before64 (now, dbs_tuners_ins.floor_valid_time)) {
-        trace_cpufreq_interactive_notyet (policy->cpu,
+        trace_cpufreq_ondemand_notyet (policy->cpu,
                                           debug_load,
                                           policy->cur,
                                           policy->cur);
@@ -953,7 +951,7 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 	/* Check for frequency decrease */
 	/* if we cannot reduce the frequency anymore, break out early */
 	if (policy->cur == policy->min) {
-        trace_cpufreq_interactive_already (policy->cpu,
+        trace_cpufreq_ondemand_already (policy->cpu,
                                            debug_load,
                                            policy->cur,
                                            policy->cur);
@@ -987,7 +985,7 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 		if (!dbs_tuners_ins.powersave_bias) {
 			debug_freq = freq_next;
 
-            trace_cpufreq_interactive_target (policy->cpu,
+            trace_cpufreq_ondemand_target (policy->cpu,
                                               debug_load,
                                               policy->cur,
                                               freq_next);
@@ -999,7 +997,7 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 					CPUFREQ_RELATION_L);
 			debug_freq = freq;
 
-            trace_cpufreq_interactive_target (policy->cpu,
+            trace_cpufreq_ondemand_target (policy->cpu,
                                               debug_load,
                                               policy->cur,
                                               freq);
@@ -1008,7 +1006,7 @@ static void dbs_check_cpu(struct cpu_dbs_info_s *this_dbs_info)
 				CPUFREQ_RELATION_L);
 		}
 
-        trace_cpufreq_interactive_down (policy->cpu, debug_freq, policy->cur);
+        trace_cpufreq_ondemand_down (policy->cpu, debug_freq, policy->cur);
 
 #ifdef CONFIG_CPU_FREQ_GOV_ONDEMAND_2_PHASE
         CPU_DEBUG_PRINTK(CPU_DEBUG_GOVERNOR,
