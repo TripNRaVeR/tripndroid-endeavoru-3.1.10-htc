@@ -38,7 +38,11 @@
 /* number of tx requests to allocate */
 #define TX_REQ_MAX 4
 
+#ifdef CONFIG_TEGRA_CPU_AP33
+#define PM_QOS_CPU_USB_FREQ_MAX_DEFAULT_VALUE 1400000
+#else
 #define PM_QOS_CPU_USB_FREQ_MAX_DEFAULT_VALUE 1600000
+#endif
 #define PM_QOS_MAX_ONLINE_CPUS_USB_TWO_VALUE 2
 
 static const char adb_shortname[] = "android_adb";
