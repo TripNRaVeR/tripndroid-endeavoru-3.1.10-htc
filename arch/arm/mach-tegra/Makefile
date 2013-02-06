@@ -228,7 +228,7 @@ obj-${CONFIG_MACH_ENRC2B}               += htc_bdaddress.o
 obj-${CONFIG_MACH_ENRC2B}               += board-enrc2b-camera.o
 
 obj-${CONFIG_MACH_ENDEAVORU}               += board-endeavoru.o
-obj-${CONFIG_MACH_ENDEAVORU}               += board-endeavor-panel.o
+obj-${CONFIG_MACH_ENDEAVORU}               += board-endeavoru-panel.o
 obj-${CONFIG_MACH_ENDEAVORU}               += board-endeavoru-pinmux.o
 obj-${CONFIG_MACH_ENDEAVORU}               += board-endeavoru-sdhci.o
 obj-${CONFIG_MACH_ENDEAVORU}               += board-endeavoru-memory.o
