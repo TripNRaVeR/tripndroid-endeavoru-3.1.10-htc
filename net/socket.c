@@ -105,13 +105,6 @@
 #include <linux/sockios.h>
 #include <linux/atalk.h>
 
-#ifdef CONFIG_RIL_FTRACE_DEBUG_SOCK_IOCTL
-#include <linux/vermagic.h>
-#include <mach/htc_hostdbg.h>
-extern unsigned int host_dbg_flag;
-unsigned int inline ftrace_debug_enabled() { return host_dbg_flag & DBG_FTRACE_IOCTL; }
-#endif
-
 static int sock_no_open(struct inode *irrelevant, struct file *dontcare);
 static ssize_t sock_aio_read(struct kiocb *iocb, const struct iovec *iov,
 			 unsigned long nr_segs, loff_t pos);
@@ -516,19 +509,8 @@ const struct file_operations bad_sock_fops = {
  *	an inode not a file.
  */
 
-#ifdef CONFIG_MSM_NONSMD_PACKET_FILTER
-int add_or_remove_port(struct sock *sk, int add_or_remove);  //SSD_RIL: Garbage_Filter_TCP
-#endif
-
 void sock_release(struct socket *sock)
 {
-#ifdef CONFIG_MSM_NONSMD_PACKET_FILTER
-	//++SSD_RIL: Garbage_Filter_TCP
-	if (sock->sk != NULL)
-		add_or_remove_port(sock->sk, 0);
-	//--SSD_RIL: Garbage_Filter_TCP
-#endif
-
 	if (sock->ops) {
 		struct module *owner = sock->ops->owner;
 
@@ -691,6 +673,22 @@ void __sock_recv_timestamp(struct msghdr *msg, struct sock *sk,
 			 SCM_TIMESTAMPING, sizeof(ts), &ts);
 }
 EXPORT_SYMBOL_GPL(__sock_recv_timestamp);
+
+void __sock_recv_wifi_status(struct msghdr *msg, struct sock *sk,
+	struct sk_buff *skb)
+{
+	int ack;
+
+	if (!sock_flag(sk, SOCK_WIFI_STATUS))
+		return;
+	if (!skb->wifi_acked_valid)
+		return;
+
+	ack = skb->wifi_acked;
+
+	put_cmsg(msg, SOL_SOCKET, SCM_WIFI_STATUS, sizeof(ack), &ack);
+}
+EXPORT_SYMBOL_GPL(__sock_recv_wifi_status);
 
 static inline void sock_recv_drops(struct msghdr *msg, struct sock *sk,
 				   struct sk_buff *skb)
@@ -980,56 +978,6 @@ static long sock_do_ioctl(struct net *net, struct socket *sock,
 	return err;
 }
 
-#ifdef CONFIG_RIL_FTRACE_DEBUG_SOCK_IOCTL
-static void sock_ioctl_expired(unsigned long unused)
-{
-	tracing_off();
-	pr_err("[%s] kernel version %s ", __func__, VERMAGIC_STRING);
-}
-
-static DEFINE_TIMER(sock_ioctl_timer, sock_ioctl_expired, 0, 0);
-
-static void sock_ioctl_debug_start(unsigned cmd, void __user *arg)
-{
-	struct ifreq ifr;
-
-	if (!((cmd == SIOCGIFFLAGS) || (cmd == SIOCSIFFLAGS)))
-		return;
-
-	if (copy_from_user(&ifr, arg, sizeof(struct ifreq)))
-		return;
-
-	if (strcmp(ifr.ifr_ifrn.ifrn_name, "rmnet0"))
-		return;
-
-	mod_timer(&sock_ioctl_timer, jiffies + msecs_to_jiffies(1000));
-	pr_info("[%s] ifr_name %s - %s, timer armed\n", __func__,
-		ifr.ifr_ifrn.ifrn_name,
-		(cmd == SIOCGIFFLAGS)? "SIOCGIFFLAGS":
-		(cmd == SIOCSIFFLAGS)? "SIOCSIFFLAGS": "unknown");
-}
-
-static void sock_ioctl_debug_stop(unsigned cmd, void __user *arg)
-{
-	struct ifreq ifr;
-
-	if (!((cmd == SIOCGIFFLAGS) || (cmd == SIOCSIFFLAGS)))
-		return;
-
-	if (copy_from_user(&ifr, arg, sizeof(struct ifreq)))
-		return;
-
-	if (strcmp(ifr.ifr_ifrn.ifrn_name, "rmnet0"))
-		return;
-
-	del_timer(&sock_ioctl_timer);
-	pr_info("[%s] ifr_name %s - %s, timer disarmed\n", __func__,
-		ifr.ifr_ifrn.ifrn_name,
-		(cmd == SIOCGIFFLAGS)? "SIOCGIFFLAGS":
-		(cmd == SIOCSIFFLAGS)? "SIOCSIFFLAGS": "unknown");
-}
-#endif
-
 /*
  *	With an ioctl, arg may well be a user mode pointer, but we don't know
  *	what to do with it - that's up to the protocol still.
@@ -1042,12 +990,6 @@ static long sock_ioctl(struct file *file, unsigned cmd, unsigned long arg)
 	void __user *argp = (void __user *)arg;
 	int pid, err;
 	struct net *net;
-
-#ifdef CONFIG_RIL_FTRACE_DEBUG_SOCK_IOCTL
-	unsigned int s_ftrace_enabled = ftrace_debug_enabled();
-	if( s_ftrace_enabled )
-		sock_ioctl_debug_start(cmd, argp);
-#endif
 
 	sock = file->private_data;
 	sk = sock->sk;
@@ -1112,12 +1054,6 @@ static long sock_ioctl(struct file *file, unsigned cmd, unsigned long arg)
 			err = sock_do_ioctl(net, sock, cmd, arg);
 			break;
 		}
-
-#ifdef CONFIG_RIL_FTRACE_DEBUG_SOCK_IOCTL
-	if( s_ftrace_enabled )
-		sock_ioctl_debug_stop(cmd, argp);
-#endif
-
 	return err;
 }
 
@@ -1547,12 +1483,6 @@ SYSCALL_DEFINE2(listen, int, fd, int, backlog)
 			err = sock->ops->listen(sock, backlog);
 
 		fput_light(sock->file, fput_needed);
-#ifdef CONFIG_MSM_NONSMD_PACKET_FILTER
-		//++SSD_RIL: Garbage_Filter_TCP
-		if (sock->sk != NULL)
-			add_or_remove_port(sock->sk, 1);
-		//--SSD_RIL: Garbage_Filter_TCP
-#endif
 	}
 	return err;
 }

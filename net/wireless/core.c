@@ -492,6 +492,10 @@ int wiphy_register(struct wiphy *wiphy)
 		    !(wiphy->wowlan.flags & WIPHY_WOWLAN_SUPPORTS_GTK_REKEY)))
 		return -EINVAL;
 
+	if (WARN_ON(wiphy->ap_sme_capa &&
+		    !(wiphy->flags & WIPHY_FLAG_HAVE_AP_SME)))
+		return -EINVAL;
+
 	if (WARN_ON(wiphy->addresses && !wiphy->n_addresses))
 		return -EINVAL;
 
@@ -570,6 +574,16 @@ int wiphy_register(struct wiphy *wiphy)
 			return -EINVAL;
 	}
 
+#ifdef CONFIG_ANDROID
+	/* use wowlan by default */
+	if (rdev->wiphy.wowlan.flags & WIPHY_WOWLAN_ANY) {
+		/* TODO: free wowlan in case we fail later*/
+		rdev->wowlan = kzalloc(sizeof(*rdev->wowlan), GFP_KERNEL);
+		if (!rdev->wowlan)
+			return -ENOMEM;
+		rdev->wowlan->any = true;
+	}
+#endif
 	/* check and set up bitrates */
 	ieee80211_set_bitrate_flags(wiphy);
 
@@ -582,7 +596,7 @@ int wiphy_register(struct wiphy *wiphy)
 	}
 
 	/* set up regulatory info */
-	wiphy_update_regulatory(wiphy, NL80211_REGDOM_SET_BY_CORE);
+	regulatory_update(wiphy, NL80211_REGDOM_SET_BY_CORE);
 
 	list_add_rcu(&rdev->list, &cfg80211_rdev_list);
 	cfg80211_rdev_list_generation++;

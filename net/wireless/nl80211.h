@@ -12,6 +12,9 @@ void nl80211_send_scan_done(struct cfg80211_registered_device *rdev,
 			    struct net_device *netdev);
 void nl80211_send_scan_aborted(struct cfg80211_registered_device *rdev,
 			       struct net_device *netdev);
+void nl80211_send_intermediate_result(struct cfg80211_registered_device *rdev,
+				      struct net_device *netdev,
+				      struct cfg80211_event *ev);
 void nl80211_send_sched_scan(struct cfg80211_registered_device *rdev,
 			     struct net_device *netdev, u32 cmd);
 void nl80211_send_sched_scan_results(struct cfg80211_registered_device *rdev,
@@ -104,6 +107,11 @@ nl80211_send_cqm_rssi_notify(struct cfg80211_registered_device *rdev,
 			     struct net_device *netdev,
 			     enum nl80211_cqm_rssi_threshold_event rssi_event,
 			     gfp_t gfp);
+
+void nl80211_req_channel_switch(struct cfg80211_registered_device *rdev,
+				struct ieee80211_channel *chan,
+				struct net_device *netdev, gfp_t gfp);
+
 void
 nl80211_send_cqm_pktloss_notify(struct cfg80211_registered_device *rdev,
 				struct net_device *netdev, const u8 *peer,
@@ -112,5 +120,18 @@ nl80211_send_cqm_pktloss_notify(struct cfg80211_registered_device *rdev,
 void nl80211_gtk_rekey_notify(struct cfg80211_registered_device *rdev,
 			      struct net_device *netdev, const u8 *bssid,
 			      const u8 *replay_ctr, gfp_t gfp);
+
+void nl80211_pmksa_candidate_notify(struct cfg80211_registered_device *rdev,
+				    struct net_device *netdev, int index,
+				    const u8 *bssid, bool preauth, gfp_t gfp);
+
+void nl80211_ch_switch_notify(struct cfg80211_registered_device *rdev,
+			      struct net_device *dev, int freq,
+			      enum nl80211_channel_type type, gfp_t gfp);
+
+bool nl80211_unexpected_frame(struct net_device *dev,
+			      const u8 *addr, gfp_t gfp);
+bool nl80211_unexpected_4addr_frame(struct net_device *dev,
+				    const u8 *addr, gfp_t gfp);
 
 #endif /* __NET_WIRELESS_NL80211_H */
