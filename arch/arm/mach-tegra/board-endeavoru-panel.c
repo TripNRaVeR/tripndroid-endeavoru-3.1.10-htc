@@ -4513,7 +4513,7 @@ int __init endeavor_panel_init(void)
 				ARRAY_SIZE(endeavor_bl_devices));
 	INIT_WORK(&bkl_work, bkl_do_work);
 	bkl_wq = create_workqueue("bkl_wq");
-	setup_timer(&bkl_timer, bkl_update, NULL);
+	setup_timer(&bkl_timer, bkl_update, 0);
 
 failed:
 	DISP_INFO_OUT();
