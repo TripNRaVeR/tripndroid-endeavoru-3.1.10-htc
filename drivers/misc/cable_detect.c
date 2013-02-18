@@ -123,7 +123,7 @@ static void send_cable_connect_notify(int cable_type)
 	mutex_lock(&cable_notify_sem);
 
 	if (cable_type == CONNECT_TYPE_UNKNOWN)
-		cable_type = CONNECT_TYPE_USB;
+		cable_type = CONNECT_TYPE_AC;
 #if 0 /* DMB */
 	if (cable_type > 0 && pInfo->accessory_type == DOCK_STATE_DMB) {
 		CABLE_INFO("%s: DMB presents. Disabling charge.\n", __func__);
@@ -134,7 +134,7 @@ static void send_cable_connect_notify(int cable_type)
 		if (notifier->func != NULL) {
 			CABLE_INFO("Send to: %s, type %d\n", notifier->name, cable_type);
 			/* Notify other drivers about connect type. */
-			/* use slow charging for unknown type*/
+			/* use ac charging for unknown type*/
 			notifier->func(cable_type);
 		}
 	}
