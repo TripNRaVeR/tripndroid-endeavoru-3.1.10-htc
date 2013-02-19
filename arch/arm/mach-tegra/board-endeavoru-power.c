@@ -713,6 +713,7 @@ static struct tegra_suspend_platform_data endeavoru_suspend_data = {
 	.lp1_core_volt_low = 0x1D,
 	.lp1_core_volt_high = 0x33,
 #endif
+	.cpu_wake_freq = CPU_WAKE_FREQ_LOW,
 };
 
 int __init endeavoru_suspend_init(void)
