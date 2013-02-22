@@ -295,12 +295,6 @@ static void tegra_vibrator_init(void)
 #endif
 
 
-static struct platform_device endeavoru_rfkill = {
-	.name = "endeavoru_rfkill",
-	.id = -1,
-};
-
-
 /* TI 128x Bluetooth begin */
 static unsigned long retry_suspend;
 
@@ -808,13 +802,10 @@ static struct uart_clk_parent uart_parent_clk[] = {
 #endif
 };
 static struct tegra_uart_platform_data endeavoru_uart_pdata;
-static struct tegra_uart_platform_data endeavoru_loopback_uart_pdata;
 
 #ifdef CONFIG_SERIAL_TEGRA_BRCM
 static struct tegra_uart_platform_data endeavoru_brcm_uart_pdata;
 #endif
-
-static struct tegra_uart_platform_data endeavor_uart_pdata;
 
 #ifdef CONFIG_BT_CTS_WAKEUP
 static struct tegra_uart_platform_data endeavor_bt_uart_pdata;
@@ -870,13 +861,6 @@ static void __init endeavoru_uart_init(void)
 	endeavoru_uart_pdata.parent_clk_list = uart_parent_clk;
 	endeavoru_uart_pdata.parent_clk_count = ARRAY_SIZE(uart_parent_clk);
 
-/* GPS use UARTE
-	endeavoru_loopback_uart_pdata.parent_clk_list = uart_parent_clk;
-	endeavoru_loopback_uart_pdata.parent_clk_count =
-						ARRAY_SIZE(uart_parent_clk);
-	endeavoru_loopback_uart_pdata.is_loopback = true;
-*/
-
 	tegra_uarta_device.dev.platform_data = &endeavoru_uart_pdata;
 	tegra_uartb_device.dev.platform_data = &endeavoru_uart_pdata;
 	tegra_uartc_device.dev.platform_data = &endeavoru_uart_pdata;
@@ -907,11 +891,6 @@ static void __init endeavoru_uart_init(void)
 	tegra_uartc_device.dev.platform_data = &endeavoru_brcm_uart_pdata;
 	tegra_uartc_device.name = "tegra_uart_brcm"; /* for brcm */
 #endif
-
-/* GPS uses UARTE
-	// UARTE is used for loopback test purpose
-	tegra_uarte_device.dev.platform_data = &endeavoru_loopback_uart_pdata;
-*/
 
 	/* Register low speed only if it is selected */
 	if (!is_tegra_debug_uartport_hs())
@@ -1011,74 +990,6 @@ static struct platform_device *endeavoru_devices[] __initdata = {
 #if defined(CONFIG_CRYPTO_DEV_TEGRA_AES)
 	&tegra_aes_device,
 #endif
-};
-
-#define MXT_CONFIG_CRC 0x62F903
-/*
- * Config converted from memory-mapped cfg-file with
- * following version information:
- *
- *
- *
- *      FAMILY_ID=128
- *      VARIANT=1
- *      VERSION=32
- *      BUILD=170
- *      VENDOR_ID=255
- *      PRODUCT_ID=TBD
- *      CHECKSUM=0xC189B6
- *
- *
- */
-
-static const u8 config[] = {
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0xFF, 0xFF, 0x32, 0x0A, 0x00, 0x05, 0x01, 0x00,
-        0x00, 0x1E, 0x0A, 0x8B, 0x00, 0x00, 0x13, 0x0B,
-        0x00, 0x10, 0x32, 0x03, 0x03, 0x00, 0x03, 0x01,
-        0x00, 0x0A, 0x0A, 0x0A, 0x0A, 0xBF, 0x03, 0x1B,
-        0x02, 0x00, 0x00, 0x37, 0x37, 0x00, 0x00, 0x00,
-        0x00, 0x28, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0xA9, 0x7F, 0x9A, 0x0E, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x03, 0x23, 0x00, 0x00, 0x00, 0x0A,
-        0x0F, 0x14, 0x19, 0x03, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x01, 0x00, 0x03, 0x08, 0x10,
-        0x00
-};
-
-static struct mxt_platform_data atmel_mxt_info = {
-        .x_line         = 19,
-        .y_line         = 11,
-        .x_size         = 960,
-        .y_size         = 540,
-        .blen           = 0x10,
-        .threshold      = 0x32,
-        .voltage        = 3300000,              /* 3.3V */
-        .orient         = 3,
-        .config         = config,
-        .config_length  = 168,
-        .config_crc     = MXT_CONFIG_CRC,
-        .irqflags       = IRQF_TRIGGER_FALLING,
-/*      .read_chg       = &read_chg, */
-        .read_chg       = NULL,
-};
-
-static struct i2c_board_info __initdata atmel_i2c_info[] = {
-	{
-		I2C_BOARD_INFO("atmel_mxt_ts", MXT224_I2C_ADDR1),
-		.irq = TEGRA_GPIO_TO_IRQ(TEGRA_GPIO_PH6),
-		.platform_data = &atmel_mxt_info,
-	}
 };
 
 //virtual key for XC board and later (3 virtual keys)
@@ -1802,30 +1713,6 @@ static void endeavoru_audio_init(void)
 			ARRAY_SIZE(endeavoru_audio_devices));
 }
 
-static void endeavoru_gps_init(void)
-{
-	int rc;
-
-	tegra_gpio_enable(TEGRA_GPIO_PBB7);	// GPS_RESET_N gpio223
-	tegra_gpio_enable(TEGRA_GPIO_PP5);	// GPS_ON_OFF gpio125
-
-	rc = gpio_request(TEGRA_GPIO_PP5, "GPS_ON_OFF");
-	if (rc)
-		pr_err("GPS_ON_OFF gpio request failed:%d\n", rc);
-	rc = gpio_direction_output(TEGRA_GPIO_PP5, 0);
-	if (rc)
-		pr_err("GPS_ON_OFF gpio direction configuration failed:%d\n", rc);
-	gpio_export(TEGRA_GPIO_PP5, false);
-
-	rc = gpio_request(TEGRA_GPIO_PBB7, "GPS_RESET_N");
-	if (rc)
-		pr_err("GPS_RESET_N gpio request failed:%d\n", rc);
-	rc = gpio_direction_output(TEGRA_GPIO_PBB7, 1);
-	if (rc)
-		pr_err("GPS_RESET_N gpio direction configuration failed:%d\n", rc);
-	gpio_export(TEGRA_GPIO_PBB7, false);
-}
-
 static struct baseband_power_platform_data tegra_baseband_power_data = {
 	.baseband_type = BASEBAND_XMM,
 	.modem = {
@@ -1974,26 +1861,6 @@ static void gpio_o_l(int gpio, char* name)
         }
         tegra_gpio_enable(gpio);
         gpio_export(gpio, true);
-}
-
-static void modem_not_init(void)
-{
-        pr_info("%s: disable gpio\n", __func__);
-
-        gpio_o_l(TEGRA_GPIO_PM4, "TEGRA_GPIO_PM4");
-        gpio_o_l(TEGRA_GPIO_PC1, "TEGRA_GPIO_PC1");
-        gpio_o_l(TEGRA_GPIO_PN0, "TEGRA_GPIO_PN0");
-        gpio_o_l(TEGRA_GPIO_PN3, "TEGRA_GPIO_PN3");
-        gpio_o_l(TEGRA_GPIO_PC6, "TEGRA_GPIO_PC6");
-        gpio_o_l(TEGRA_GPIO_PJ0, "TEGRA_GPIO_PJ0");
-        gpio_o_l(TEGRA_GPIO_PV0, "TEGRA_GPIO_PV0");
-        gpio_o_l(TEGRA_GPIO_PN1, "TEGRA_GPIO_PN1");
-        gpio_o_l(TEGRA_GPIO_PN2, "TEGRA_GPIO_PN2");
-        gpio_o_l(TEGRA_GPIO_PJ7, "TEGRA_GPIO_PJ7");
-        gpio_o_l(TEGRA_GPIO_PK7, "TEGRA_GPIO_PK7");
-        gpio_o_l(TEGRA_GPIO_PB0, "TEGRA_GPIO_PB0");
-        gpio_o_l(TEGRA_GPIO_PB1, "TEGRA_GPIO_PB1");
-
 }
 
 static void endeavoru_baseband_init(void)
@@ -2202,7 +2069,7 @@ static void __init endeavoru_init(void)
 		sysfs_create_group(properties_kobj, &Aproj_properties_attr_group_XC);
 	}
 	endeavoru_audio_init();
-	//endeavoru_gps_init();
+
 	endeavoru_baseband_init();
 	endeavor_panel_init();
 	endeavoru_emc_init();
