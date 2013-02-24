@@ -4048,6 +4048,9 @@ static struct clk tegra_clk_virtual_cpu_g = {
 	.parent    = &tegra_clk_cclk_g,
 	.ops       = &tegra_cpu_ops,
 	.max_rate  = 1700000000,
+#ifdef CONFIG_TRIPNDROID_HOTPLUG
+	.min_rate  = 102000000,
+#endif
 	.u.cpu = {
 		.main      = &tegra_pll_x,
 		.backup    = &tegra_pll_p,
@@ -4919,8 +4922,12 @@ static int clip_cpu_rate_limits(
 		       cpu_clk_lp->max_rate, ret ? "outside" : "at the bottom");
 		return ret;
 	}
+#ifndef CONFIG_TRIPNDROID_HOTPLUG
 	cpu_clk_lp->max_rate = freq_table[idx].frequency * 1000;
 	cpu_clk_g->min_rate = freq_table[idx-1].frequency * 1000;
+#else
+	cpu_clk_g->min_rate = 102000;
+#endif
 	data->suspend_index = idx;
 	return 0;
 }
