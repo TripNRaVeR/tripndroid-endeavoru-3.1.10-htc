@@ -129,7 +129,7 @@ pure_initcall(init_cpufreq_transition_notifier_list);
 
 static LIST_HEAD(cpufreq_governor_list);
 static DEFINE_MUTEX(cpufreq_governor_mutex);
-
+	
 static struct cpufreq_policy *__cpufreq_cpu_get(unsigned int cpu, bool sysfs)
 {
 	struct cpufreq_policy *data;
@@ -475,14 +475,42 @@ static ssize_t store_scaling_governor(struct cpufreq_policy *policy,
 	unsigned int ret = -EINVAL;
 	char	str_governor[16];
 	struct cpufreq_policy new_policy;
-
-	ret = cpufreq_get_policy(&new_policy, policy->cpu);
-	if (ret)
-		return ret;
+#ifdef CONFIG_HOTPLUG_CPU
+	int cpu;
+#endif
 
 	ret = sscanf(buf, "%15s", str_governor);
 	if (ret != 1)
 		return -EINVAL;
+
+	// maxwen: try to set govenor to all online cpus
+#ifdef CONFIG_HOTPLUG_CPU
+	for_each_present_cpu(cpu) {
+		ret = cpufreq_get_policy(&new_policy, cpu);
+		if (ret){
+			continue;
+		}
+		
+		if (cpufreq_parse_governor(str_governor, &new_policy.policy,
+						&new_policy.governor)){
+
+			continue;
+		}
+
+		/* not use cpufreq_set_policy here or the user_policy.max will be wrongly overridden */
+		ret = __cpufreq_set_policy(policy, &new_policy);
+
+		policy->user_policy.policy = policy->policy;
+		policy->user_policy.governor = policy->governor;
+		
+		if (ret){
+			continue;
+		}
+	}
+#else 
+	ret = cpufreq_get_policy(&new_policy, policy->cpu);
+	if (ret)
+		return ret;
 
 	if (cpufreq_parse_governor(str_governor, &new_policy.policy,
 						&new_policy.governor))
@@ -497,8 +525,8 @@ static ssize_t store_scaling_governor(struct cpufreq_policy *policy,
 
 	if (ret)
 		return ret;
-	else
-		return count;
+#endif
+	return count;	
 }
 
 /**
@@ -731,6 +759,9 @@ static int cpufreq_add_dev_policy(unsigned int cpu,
 #ifdef CONFIG_SMP
 	unsigned long flags;
 	unsigned int j;
+	
+// maxwen: we have already set the policy that we want to use
+/*
 #ifdef CONFIG_HOTPLUG_CPU
 	struct cpufreq_governor *gov;
 
@@ -741,6 +772,7 @@ static int cpufreq_add_dev_policy(unsigned int cpu,
 		       policy->governor->name, cpu);
 	}
 #endif
+*/
 
 	for_each_cpu(j, policy->cpus) {
 		struct cpufreq_policy *managed_policy;
@@ -976,9 +1008,13 @@ static int cpufreq_add_dev(struct sys_device *sys_dev)
 			break;
 		}
 	}
+		
 #endif
-	if (!found)
+
+	if (!found){
 		policy->governor = CPUFREQ_DEFAULT_GOVERNOR;
+	}
+	
 	/* call driver. From then on the cpufreq must be able
 	 * to accept all calls to ->verify and ->setpolicy for this CPU
 	 */
@@ -2075,3 +2111,4 @@ static int __init cpufreq_core_init(void)
 	return 0;
 }
 core_initcall(cpufreq_core_init);
+
