@@ -53,7 +53,6 @@
 extern unsigned int get_powersave_freq();
 /* Symbol to store resume resume */
 extern unsigned long long wake_reason_resume;
-static spinlock_t user_cap_lock;
 
 /* tegra throttling and edp governors require frequencies in the table
    to be in ascending order */
@@ -102,18 +101,12 @@ static unsigned int cpu_user_cap;
 
 void htc_set_cpu_user_cap(const unsigned int value)
 {
-	unsigned long flags = 0;
-	spin_lock_irqsave(&user_cap_lock, flags);
-	cpu_user_cap = value;
-	spin_unlock_irqrestore(&user_cap_lock, flags);
+	cpu_user_cap = 0;
 }
 
 void htc_get_cpu_user_cap(unsigned int *value)
 {
-	unsigned long flags = 0;
-	spin_lock_irqsave(&user_cap_lock, flags);
-	*value = cpu_user_cap;
-	spin_unlock_irqrestore(&user_cap_lock, flags);
+	*value = 0;
 }
 
 static inline void _cpu_user_cap_set_locked(void)
