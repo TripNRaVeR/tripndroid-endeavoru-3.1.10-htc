@@ -54,7 +54,6 @@ extern unsigned int get_powersave_freq();
 /* Symbol to store resume resume */
 extern unsigned long long wake_reason_resume;
 static spinlock_t user_cap_lock;
-struct work_struct htc_suspend_resume_work;
 
 /* tegra throttling and edp governors require frequencies in the table
    to be in ascending order */
@@ -2100,7 +2099,6 @@ _out:
 }
 
 #ifdef CONFIG_HAS_EARLYSUSPEND
-static struct pm_qos_request_list boost_cpu_freq_req;
 static struct pm_qos_request_list cap_cpu_freq_req;
 #define CAP_CPU_FREQ_MAX 640000
 
@@ -2265,18 +2263,6 @@ static struct cpufreq_driver tegra_cpufreq_driver = {
 	.resume	= tegra_cpufreq_resume,
 };
 
-static void htc_suspend_resume_worker(struct work_struct *w)
-{
-	pm_qos_update_request(&cap_cpu_freq_req,
-			(s32)PM_QOS_CPU_FREQ_MAX_DEFAULT_VALUE);
-	pr_info("Release early suspend CPU cap by RIL!");
-
-	pm_qos_update_request(&boost_cpu_freq_req, (s32)BOOST_CPU_FREQ_MIN);
-	tegra_update_cpu_speed(BOOST_CPU_FREQ_MIN);
-	pr_info("tegra_cpufreq_powersave_late_resume:"
-		" boost cpu freq to Max freq by RIL\n");
-}
-
 void release_screen_off_freq_lock(unsigned int capfreq )
 {
     if (enter_early_suspend){
@@ -2303,7 +2289,7 @@ EXPORT_SYMBOL_GPL(lock_screen_off_freq_lock);
 static int ril_boost;
 static int ril_boost_set(const char *arg, const struct kernel_param *kp)
 {
-	return schedule_work(&htc_suspend_resume_work);
+	return 0;
 }
 
 static int ril_boost_get(char *buffer, const struct kernel_param *kp)
@@ -2340,7 +2326,6 @@ static int __init tegra_cpufreq_init(void)
 
 	freq_table = table_data->freq_table;
 	tegra_cpu_edp_init(false);
-	INIT_WORK(&htc_suspend_resume_work, htc_suspend_resume_worker);
 
 	ret = cpufreq_register_notifier(
 		&tegra_cpufreq_policy_nb, CPUFREQ_POLICY_NOTIFIER);
