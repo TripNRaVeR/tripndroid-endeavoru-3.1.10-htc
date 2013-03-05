@@ -107,7 +107,7 @@ static struct conf_drv_settings default_conf = {
 			[CONF_SG_RXT] = 1200,
 			[CONF_SG_TXT] = 1000,
 			[CONF_SG_ADAPTIVE_RXT_TXT] = 1,
-			[CONF_SG_GENERAL_USAGE_BIT_MAP] = 3,
+			[CONF_SG_GENERAL_USAGE_BIT_MAP] = 19,
 			[CONF_SG_HV3_MAX_SERVED] = 6,
 			[CONF_SG_PS_POLL_TIMEOUT] = 10,
 			[CONF_SG_UPSD_TIMEOUT] = 10,
@@ -5372,6 +5372,10 @@ static void wl12xx_update_sta_state(struct wl1271 *wl,
 
 		ret = wl1271_acx_set_ht_capabilities(wl, &sta->ht_cap, true,
 						     hlid);
+		if (ret < 0)
+			return;
+
+		ret = wl1271_acx_ap_conn_estab_complete(wl);
 		if (ret < 0)
 			return;
 	}
