@@ -1585,6 +1585,10 @@ static int tegra3_pll_clk_enable(struct clk *c)
 
 #if USE_PLL_LOCK_BITS
 	val = clk_readl(c->reg + PLL_MISC(c));
+	val &= ~PLL_MISC_LOCK_ENABLE(c);
+	clk_writel(val, c->reg + PLL_MISC(c));
+	val = clk_readl(c->reg + PLL_MISC(c));
+	val = clk_readl(c->reg + PLL_MISC(c));
 	val |= PLL_MISC_LOCK_ENABLE(c);
 	clk_writel(val, c->reg + PLL_MISC(c));
 #endif
