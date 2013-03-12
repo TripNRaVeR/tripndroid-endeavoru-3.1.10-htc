@@ -60,6 +60,7 @@ obj-$(CONFIG_MPU_SENSORS_MPU3050_HTC)   += mpu3050_htc/
 obj-$(CONFIG_TEGRA_CRYPTO_DEV)	+= tegra-cryptodev.o
 obj-$(CONFIG_TEGRA_BB_SUPPORT)	+= tegra-baseband/
 obj-$(CONFIG_MAX1749_VIBRATOR)	+= max1749.o
+obj-$(CONFIG_TRIPNDROID_VIBRATOR)	+= tripndroid_vibrator.o
 obj-$(CONFIG_TEGRA_VIBRATOR)	+= tegra_vibrator.o
 obj-$(CONFIG_TEGRA_VIBRATOR_ENR)+= tegra_vibrator_enr.o
 obj-$(CONFIG_CABLE_DETECT_ACCESSORY)+= cable_detect.o

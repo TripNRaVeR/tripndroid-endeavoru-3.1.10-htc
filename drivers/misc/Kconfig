@@ -562,6 +562,13 @@ config MAX1749_VIBRATOR
 	---help---
 	Adds a timed output vibrator device node for MAX1749 vibrator motor
 
+config TRIPNDROID_VIBRATOR
+	bool "TripNDroid vibrator driver for Tegra devices"
+	depends on ANDROID_TIMED_OUTPUT
+        default n
+        ---help---
+        Include custom vibration driver by TripNDroid
+
 config TEGRA_VIBRATOR
 	bool "vibrator device driver on Tegra"
 	depends on ANDROID_TIMED_OUTPUT
