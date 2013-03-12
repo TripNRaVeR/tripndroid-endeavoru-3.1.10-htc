@@ -52,6 +52,10 @@
 #include <linux/tegra_vibrator_enr.h>
 #endif
 
+#ifdef CONFIG_TRIPNDROID_VIBRATOR
+#include <linux/tripndroid_vibrator.h>
+#endif
+
 #include <mach/clk.h>
 #include <mach/iomap.h>
 #include <mach/irqs.h>
@@ -294,6 +298,28 @@ static void tegra_vibrator_init(void)
 }
 #endif
 
+#ifdef CONFIG_TRIPNDROID_VIBRATOR
+static struct vibrator_platform_data vibrator_data = {
+	.pwm_data={
+		.name = "vibrator",
+		.bank = 0,
+	},
+	.pwm_gpio = TEGRA_GPIO_PH0,
+	.ena_gpio = TEGRA_GPIO_PF1,
+	.pwr_gpio = TEGRA_GPIO_PE7,
+};
+static struct platform_device tegra_vibrator = {
+	.name= VIBRATOR_NAME,
+	.id=-1,
+	.dev = {
+		.platform_data=&vibrator_data,
+	},
+};
+static void tripndroid_vibrator_init(void)
+{
+	platform_device_register(&tegra_vibrator);
+}
+#endif
 
 /* TI 128x Bluetooth begin */
 static unsigned long retry_suspend;
@@ -2077,7 +2103,15 @@ static void __init endeavoru_init(void)
 	endeavoru_cam_init();
 	endeavoru_suspend_init();
 	tegra_release_bootloader_fb();
+
+#ifdef CONFIG_TEGRA_VIBRATOR_ENR
 	tegra_vibrator_init();
+#endif
+
+#ifdef CONFIG_TRIPNDROID_VIBRATOR
+	tripndroid_vibrator_init();
+#endif
+
 	leds_lp5521_init();
 	endeavor_flashlight_init();
 #if defined(CONFIG_CABLE_DETECT_ACCESSORY)
