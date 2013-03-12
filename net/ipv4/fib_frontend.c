@@ -47,7 +47,7 @@
 #include <net/xfrm.h>
 
 // ** [Start] HTC add iptables debug log
-#define FIB_IPTABLES_DEBUG 1
+#define FIB_IPTABLES_DEBUG 0
 // ** [End] HTC add iptables debug log
 
 
