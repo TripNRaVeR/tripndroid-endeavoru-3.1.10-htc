@@ -211,7 +211,6 @@ config HTC_POWER_OFF
 
 config HTC_PROJECT
        bool "HTC Project"
-       select HTC_DEBUG_FILE_NODE
        select WATCHDOG
        select TEGRA_WATCHDOG
        select TEGRA_WATCHDOG_ENABLE_ON_PROBE
