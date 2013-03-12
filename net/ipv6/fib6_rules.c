@@ -22,7 +22,7 @@
 #include <net/netlink.h>
 
 // ** [Start] HTC add iptables debug log
-#define FIB_RULE_DEBUG 1
+#define FIB_RULE_DEBUG 0
 // ** [End] HTC add iptables debug log
 
 struct fib6_rule
