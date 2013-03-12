@@ -97,7 +97,7 @@ typedef unsigned int t_key;
 #define IS_LEAF(n) (n->parent & T_LEAF)
 
 // ** [Start] HTC add iptables debug log
-#define FIB_RULE_DEBUG 1
+#define FIB_RULE_DEBUG 0
 // ** [End] HTC add iptables debug log
 
 struct rt_trie_node {
