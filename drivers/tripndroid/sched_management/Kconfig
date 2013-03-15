@@ -1,0 +1,9 @@
+config TDF_RQ_STATS
+	bool "TDF Scheduler rq statistics"
+	depends on TDF_SCHED_MANAGEMENT && !TEGRA_AUTO_HOTPLUG
+	help
+	  This option enables load statistics from the scheduler to be
+	  available to drivers like for example cpu hotplug drivers.
+	  It is platform independent and every generic hotplug driver is
+	  able to use it.
+	  usage: sched_get_nr_running_avg();

@@ -47,6 +47,10 @@
 static int scale3d_is_enabled(void);
 static void scale3d_enable(int enable);
 
+#ifdef CONFIG_TRIPNDROID_FRAMEWORK
+extern unsigned int powersaving_active;
+#endif
+
 #define POW2(x) ((x) * (x))
 #define CAMERA_3D_CLK 352000000
 #define CAMERA_3D_EMC_CLK 437000000
@@ -442,7 +446,11 @@ static void scaling_state_check(ktime_t time)
 		scale3d.fast_responses++;
 		scale3d.fast_frame = time;
 		/* if too busy, scale up */
+#ifdef CONFIG_TRIPNDROID_FRAMEWORK
+		if ((!powersaving_active) && idleness < scale3d.idle_min) {
+#else
 		if (idleness < scale3d.idle_min) {
+#endif
 			scale3d.is_scaled = 0;
 			scale3d.fast_up_count++;
 			if (scale3d.p_verbosity >= 5)
@@ -464,6 +472,15 @@ static void scaling_state_check(ktime_t time)
 		if (scale3d.p_verbosity >= 5)
 			pr_info("scale3d: idle %lu, ~%lu%%\n",
 				scale3d.idle_total, idleness);
+
+#ifdef CONFIG_TRIPNDROID_FRAMEWORK
+		if (powersaving_active) {
+			scale3d.idle_max = 0;
+		}
+		else {
+			scale3d.idle_max = scale3d.idle_max;
+		}
+#endif
 
 		if (idleness > scale3d.idle_max) {
 			if (!scale3d.is_scaled) {

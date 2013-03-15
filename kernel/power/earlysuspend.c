@@ -32,6 +32,10 @@ enum {
 extern struct wake_lock power_key_wake_lock;
 extern struct wake_lock udc_resume_wake_lock;
 
+#ifdef CONFIG_TRIPNDROID_FRAMEWORK
+extern unsigned int tdf_suspend_state;
+#endif
+
 static int debug_mask = DEBUG_USER_STATE;
 module_param_named(debug_mask, debug_mask, int, S_IRUGO | S_IWUSR | S_IWGRP);
 
@@ -93,6 +97,9 @@ static void early_suspend(struct work_struct *work)
 	int abort = 0;
 
 	pr_info("[R] early_suspend start\n");
+#ifdef CONFIG_TRIPNDROID_FRAMEWORK
+	tdf_suspend_state = 1;
+#endif
 	mutex_lock(&early_suspend_lock);
 	spin_lock_irqsave(&state_lock, irqflags);
 	if (state == SUSPEND_REQUESTED) {
@@ -142,7 +149,9 @@ static void late_resume(struct work_struct *work)
 	int abort = 0;
 
 	pr_info("[R] late_resume start\n");
-
+#ifdef CONFIG_TRIPNDROID_FRAMEWORK
+	tdf_suspend_state = 0;
+#endif
 	mutex_lock(&early_suspend_lock);
 	spin_lock_irqsave(&state_lock, irqflags);
 	if (state == SUSPENDED) {

@@ -132,6 +132,10 @@ enum {
 static int is_mbat_in;
 #endif
 
+#ifdef CONFIG_TRIPNDROID_FRAMEWORK
+extern unsigned int tdf_fast_charge;
+#endif
+
 static void no_batt_func(struct work_struct *work);
 static DECLARE_DELAYED_WORK(no_batt_struct, no_batt_func);
 static struct kset *htc_batt_kset;
@@ -490,9 +494,14 @@ static void usb_status_notifier_func(int online)
 	switch (online) {
 	case CONNECT_TYPE_USB:
 		BATT_LOG("cable USB");
+#ifndef CONFIG_TRIPNDROID_FRAMEWORK
 		if ( !!(get_kernel_flag() & ALL_AC_CHARGING) ) {
 			BATT_LOG("Debug flag is set to force AC charging, fake as AC");
+#else
+		if (tdf_fast_charge == 1) {
 			htc_batt_info.rep.charging_source = CHARGER_AC;
+			BATT_LOG("TDF: fast_charge is enabled so fake as AC");
+#endif
 		} else
 			htc_batt_info.rep.charging_source = CHARGER_USB;
 		break;

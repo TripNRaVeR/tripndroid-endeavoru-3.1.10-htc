@@ -1,0 +1,6 @@
+config TDF_CPU_HOTPLUG
+        bool "TripNDroid CPU hot-plugging"
+	depends on TDF_CPU_MANAGEMENT && HOTPLUG_CPU && CPU_FREQ && !ARCH_CPU_PROBE_RELEASE
+	default n
+	help
+	  This option enables turning CPUs on/off according to scheduler loads
