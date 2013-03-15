@@ -27,7 +27,7 @@
 #include <linux/types.h>
 
 struct nvhost_master;
-
+struct nvhost_hwctx;
 struct nvhost_device_power_attr;
 
 #define NVHOST_MODULE_MAX_CLOCKS		3
@@ -172,6 +172,13 @@ struct nvhost_driver {
 	/* Allocates a context handler for the device */
 	struct nvhost_hwctx_handler *(*alloc_hwctx_handler)(u32 syncpt,
 			u32 waitbase, struct nvhost_channel *ch);
+
+	/* Read module register into memory */
+	int (*read_reg)(struct nvhost_device *dev,
+			struct nvhost_channel *ch,
+			struct nvhost_hwctx *hwctx,
+			u32 offset,
+			u32 *value);
 };
 
 extern int nvhost_driver_register(struct nvhost_driver *);
