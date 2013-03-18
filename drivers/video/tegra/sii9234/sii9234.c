@@ -515,7 +515,6 @@ static DEVICE_ATTR(rcp_event, 0644, NULL, write_keyevent);
 void sii9234_mhl_device_wakeup(void)
 {
 	int err;
-	int ret = 0 ;
 	T_MHL_SII9234_INFO *pInfo = sii9234_info_ptr;
 
 	PR_DISP_INFO("%s\n", __func__);
