@@ -139,8 +139,8 @@ static void Mhl_Proc_Remote_Event(T_MHL_SII9234_INFO *pInfo);
 static void Mhl_Proc_Reset_Key_Status(void);
 #endif
 
-extern void hdmi_hdcp_early_suspend();
-extern void hdmi_hdcp_late_resume();
+extern void hdmi_hdcp_early_suspend(void);
+extern void hdmi_hdcp_late_resume(void);
 
 /*********************************************************************
 	Functions
