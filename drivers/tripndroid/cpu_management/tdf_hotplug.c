@@ -37,7 +37,6 @@ enum {
 	TRIPNDROID_HP_DOWN,
 	TRIPNDROID_HP_UP,
 };
-unsigned int state = TRIPNDROID_HP_IDLE;
 
 struct tripndroid_hp_cpudata_t {
 	int online;
@@ -49,52 +48,68 @@ static DEFINE_MUTEX(tripndroid_hp_cpu_lock);
 
 struct delayed_work tripndroid_hp_w;
 
-extern unsigned int powersaving_active;
-extern unsigned int tdf_suspend_state;
-extern unsigned int tdf_cpu_load;
-extern unsigned int nr_run_hysteresis;
-
-static unsigned int nr_run_last;
-static unsigned int req_cpus;
-
-static struct clk *cpu_clk;
-
 static struct tripndroid_hp {
 	unsigned int sample_ms;
+	unsigned int pause;
         unsigned int max_cpus;
         unsigned int min_cpus;
 } tripndroid_hp_config = {
 	.sample_ms = TRIPNDROID_HP_SAMPLE_MS,
+	.pause = TRIPNDROID_HP_PAUSE,
         .max_cpus = CONFIG_NR_CPUS,
         .min_cpus = 1,
 };
 
-static unsigned int default_threads[] = {
-/*       1,  2,  3,  4 - on-line cpus target */
-	 4,  8, 10, UINT_MAX
+static struct clk *cpu_clk;
+
+unsigned int state = TRIPNDROID_HP_IDLE;
+
+extern unsigned int powersaving_active;
+extern unsigned int tdf_suspend_state;
+extern unsigned int nr_run_hysteresis;
+extern unsigned int tdf_cpu_load;
+
+bool was_paused = false;
+
+static unsigned int nr_run_last;
+
+static unsigned int normal_thresholds[] = {
+/* 	1,  2,  3,  4 - on-line cpus target */
+	4,  8,  9, UINT_MAX
 };
-static unsigned int powersaving_threads[] = {
+
+static unsigned int powersaving_thresholds[] = {
 /*       1,  2, - on-line cpus target */
          3,  UINT_MAX
 };
 
-static unsigned int NwNs_Threshold[8] = { 19, 30,  19,  12,  19,  11, 0,  11};
-static unsigned int TwTs_Threshold[8] = {140,  0, 140, 190, 140, 190, 0, 190};
+static unsigned int NwNs_Threshold[] = {16, 10, 24, 12, 30, 16, 0, 18};
+static unsigned int TwTs_Threshold[] = {140, 0, 140, 190, 140, 190, 0, 190};
 
-/* get the cpu nr from cpu with lowest speed */
+/* get cpu speed */
+unsigned int cpu_getspeed(unsigned int cpu)
+{
+	unsigned long rate;
+
+	if (cpu >= tripndroid_hp_config.max_cpus || !ACCESS_ONCE(cpu_clk))
+		return 0;
+
+	rate = clk_get_rate(cpu_clk) / 1000;
+	return rate;
+}
+
+/* get the nr of the cpu with the lowest speed */
 static int get_slowest_cpu(void)
 {
         int i, cpu = 0;
         unsigned long rate, slow_rate = 0;
 
-	int online_cpus = num_online_cpus();
-
-        for (i = 0; i < online_cpus; i++) {
+        for (i = 0; i < tripndroid_hp_config.max_cpus; i++) {
 
                 if (!cpu_online(i))
 			continue;
 
-		rate = clk_get_rate(cpu_clk) / 1000;
+		rate = cpu_getspeed(i);
 
 		if (slow_rate == 0) {
 			slow_rate = rate;
@@ -114,21 +129,23 @@ static unsigned int calculate_load(void)
 {
 	unsigned int avg_nr_run = avg_nr_running();
 	unsigned int nr_run;
-	unsigned int threshold;
+	unsigned int select_threshold;
 
-	if (powersaving_active) {
-		threshold =  ARRAY_SIZE(powersaving_threads);
+	if (powersaving_active == 1) {
+		select_threshold =  ARRAY_SIZE(powersaving_thresholds);
 	}
 	else {
-		threshold =  ARRAY_SIZE(default_threads);
+		select_threshold =  ARRAY_SIZE(normal_thresholds);
 	}
 
-	for (nr_run = 1; nr_run < threshold; nr_run++) {
+	for (nr_run = 1; nr_run < select_threshold; nr_run++) {
 		unsigned int nr_threshold;
-		if (powersaving_active)
-			nr_threshold = powersaving_threads[nr_run - 1];
-		else
-			nr_threshold = default_threads[nr_run - 1];
+		if (powersaving_active == 1) {
+			nr_threshold = powersaving_thresholds[nr_run - 1];
+		}
+		else {
+			nr_threshold = normal_thresholds[nr_run - 1];
+		}
 
 		if (nr_run_last <= nr_run)
 			nr_threshold += TDF_FSHIFT / nr_run_hysteresis;
@@ -148,6 +165,7 @@ static int mp_decision(void)
 	int online_cpus;
 	int index;
 	int current_run;
+	int req_cpus;
 
 	static cputime64_t total_time = 0;
 	static cputime64_t last_time;
@@ -216,11 +234,21 @@ static void tripndroid_hp_wt(struct work_struct *work)
 	if (ktime_to_ms(ktime_get()) <= tripndroid_hp_config.sample_ms)
 		goto out;
 
-        if (tdf_suspend_state)
+        if (tdf_suspend_state == 1)
 		goto out;
 
 	if (!mutex_trylock(&tripndroid_hp_cpu_lock))
 		goto out;
+
+	if (was_paused) {
+		for_each_possible_cpu(cpu) {
+			if (cpu_online(cpu))
+				per_cpu(tripndroid_hp_cpudata, cpu).online = true;
+			else if (!cpu_online(cpu))
+				per_cpu(tripndroid_hp_cpudata, cpu).online = false;
+		}
+		was_paused = false;
+	}
 
 	state = mp_decision();
 	switch (state) {
@@ -228,22 +256,30 @@ static void tripndroid_hp_wt(struct work_struct *work)
 	case TRIPNDROID_HP_DISABLED:
 		break;
 	case TRIPNDROID_HP_DOWN:
-		cpu = get_slowest_cpu();
+                cpu = get_slowest_cpu();
                 if (cpu < nr_cpu_ids) {
                         if ((per_cpu(tripndroid_hp_cpudata, cpu).online == true) && (cpu_online(cpu))) {
                                 cpu_down(cpu);
                                 per_cpu(tripndroid_hp_cpudata, cpu).online = false;
                                 on_time = ktime_to_ms(ktime_get()) - per_cpu(tripndroid_hp_cpudata, cpu).on_time;
                         }
+			else if (per_cpu(tripndroid_hp_cpudata, cpu).online != cpu_online(cpu)) {
+				msleep(tripndroid_hp_config.pause);
+				was_paused = true;
+                        }
                 }
 		break;
 	case TRIPNDROID_HP_UP:
-		cpu = cpumask_next_zero(0, cpu_online_mask);
+                cpu = cpumask_next_zero(0, cpu_online_mask);
                 if (cpu < nr_cpu_ids) {
                         if ((per_cpu(tripndroid_hp_cpudata, cpu).online == false) && (!cpu_online(cpu))) {
                                 cpu_up(cpu);
                                 per_cpu(tripndroid_hp_cpudata, cpu).online = true;
                                 per_cpu(tripndroid_hp_cpudata, cpu).on_time = ktime_to_ms(ktime_get());
+                        }
+			else if (per_cpu(tripndroid_hp_cpudata, cpu).online != cpu_online(cpu)) {
+                                msleep(tripndroid_hp_config.pause);
+                                was_paused = true;
                         }
                 }
 		break;
@@ -254,7 +290,7 @@ static void tripndroid_hp_wt(struct work_struct *work)
 
 out:
 	if (state != TRIPNDROID_HP_DISABLED) {
-		schedule_delayed_work_on(0, &tripndroid_hp_w, msecs_to_jiffies(300));
+		schedule_delayed_work_on(0, &tripndroid_hp_w, msecs_to_jiffies(200));
         }
 
 	return;
@@ -266,27 +302,32 @@ static void tripndroid_hp_early_suspend(struct early_suspend *handler)
 	int i;
 
 	cancel_delayed_work_sync(&tripndroid_hp_w);
-/*
+
 	mutex_lock(&tripndroid_hp_cpu_lock);
-	powersaving_active = 1;
+	if (!tdf_suspend_state) {
+	tdf_suspend_state = 0;
+	}
 	mutex_unlock(&tripndroid_hp_cpu_lock);
-*/
-	for (i = 1; i < tripndroid_hp_config.max_cpus; i++) {
+
+	for (i = 1; i < CONFIG_NR_CPUS; i++) {
 		if (cpu_online(i))
 			cpu_down(i);
-		per_cpu(tripndroid_hp_cpudata, i).online = false;
+
+	per_cpu(tripndroid_hp_cpudata, i).online = false;
 	}
 }
 
 static void __cpuinit tripndroid_hp_late_resume(struct early_suspend *handler)
 {
 	int i;
-/*
+
 	mutex_lock(&tripndroid_hp_cpu_lock);
-	powersaving_active = 0;
+	if (tdf_suspend_state) {
+	tdf_suspend_state = 0;
+	}
 	mutex_unlock(&tripndroid_hp_cpu_lock);
-*/
-	for (i = 1; i < tripndroid_hp_config.max_cpus; i++) {
+
+	for (i = 1; i < CONFIG_NR_CPUS; i++) {
 		if (!cpu_online(i))
 			cpu_up(i);
 
@@ -307,7 +348,7 @@ static struct early_suspend tripndroid_hp_early_suspend_struct_driver = {
 static int __init tripndroid_hp_init(void)
 {
 	int cpu, err = 0;
-	int sample_ms = usecs_to_jiffies(1000);
+	int sample_ms = usecs_to_jiffies(TRIPNDROID_HP_SAMPLE_MS);
 
 	if (num_online_cpus() > 1)
 		sample_ms -= jiffies % sample_ms;
@@ -320,6 +361,8 @@ static int __init tripndroid_hp_init(void)
 	for_each_possible_cpu(cpu) {
 		per_cpu(tripndroid_hp_cpudata, cpu).online = true;
 	}
+
+        was_paused = true;
 
 	if (state != TRIPNDROID_HP_DISABLED)
 		INIT_DELAYED_WORK(&tripndroid_hp_w, tripndroid_hp_wt);
