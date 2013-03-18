@@ -415,6 +415,7 @@ static void sii9234_irq_do_work(struct work_struct *work)
 
 void sii9234_disableIRQ(void)
 {
+	int err = TPI_Init();
 	T_MHL_SII9234_INFO *pInfo = sii9234_info_ptr;
 	cancel_work_sync(&sii9234_irq_work);
 	if (sii9244_interruptable) {
@@ -424,7 +425,6 @@ void sii9234_disableIRQ(void)
 	}
 	if (g_bMhlRsenLow) {
 		PR_DISP_INFO("RSEN low triggered TPI_Init\n");
-		int err = TPI_Init();
 		if (err != 1)
 			PR_DISP_INFO("TPI can't init\n");
 	}
