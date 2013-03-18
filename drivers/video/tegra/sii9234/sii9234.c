@@ -603,12 +603,6 @@ static int sii9234_suspend(struct i2c_client *client, pm_message_t mesg)
 	return 0;
 }
 
-static void sii9234_EnableTMDS(void)
-{
-	if (Status_Query() == POWER_STATE_D0_MHL)
-		SiiMhlTxDrvTmdsControl(true);
-}
-
 void sii9234_change_usb_owner(bool bMHL)
 {
 	PR_DISP_DEBUG("%s(%d)\n", __func__, bMHL);
