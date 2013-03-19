@@ -97,10 +97,45 @@ static struct gpio endeavor_gpios[] = {
 	{MHL_3V3_EN,	GPIOF_OUT_INIT_LOW,	"mhl_3v3_en"},
 };
 
+static tegra_dc_bl_output endeavor_bl_output_measured_a02 = {
+	1, 5, 9, 10, 11, 12, 12, 13,
+	13, 14, 14, 15, 15, 16, 16, 17,
+	17, 18, 18, 19, 19, 20, 21, 21,
+	22, 22, 23, 24, 24, 25, 26, 26,
+	27, 27, 28, 29, 29, 31, 31, 32,
+	32, 33, 34, 35, 36, 36, 37, 38,
+	39, 39, 40, 41, 41, 42, 43, 43,
+	44, 45, 45, 46, 47, 47, 48, 49,
+	49, 50, 51, 51, 52, 53, 53, 54,
+	55, 56, 56, 57, 58, 59, 60, 61,
+	61, 62, 63, 64, 65, 65, 66, 67,
+	67, 68, 69, 69, 70, 71, 71, 72,
+	73, 73, 74, 74, 75, 76, 76, 77,
+	77, 78, 79, 79, 80, 81, 82, 83,
+	83, 84, 85, 85, 86, 86, 88, 89,
+	90, 91, 91, 92, 93, 93, 94, 95,
+	95, 96, 97, 97, 98, 99, 99, 100,
+	101, 101, 102, 103, 103, 104, 105, 105,
+	107, 107, 108, 109, 110, 111, 111, 112,
+	113, 113, 114, 115, 115, 116, 117, 117,
+	118, 119, 119, 120, 121, 122, 123, 124,
+	124, 125, 126, 126, 127, 128, 129, 129,
+	130, 131, 131, 132, 133, 133, 134, 135,
+	135, 136, 137, 137, 138, 139, 139, 140,
+	142, 142, 143, 144, 145, 146, 147, 147,
+	148, 149, 149, 150, 151, 152, 153, 153,
+	153, 154, 155, 156, 157, 158, 158, 159,
+	160, 161, 162, 163, 163, 164, 165, 165,
+	166, 166, 167, 168, 169, 169, 170, 170,
+	171, 172, 173, 173, 174, 175, 175, 176,
+	176, 178, 178, 179, 180, 181, 182, 182,
+	183, 184, 185, 186, 186, 187, 188, 188
+};
 static atomic_t sd_brightness = ATOMIC_INIT(255);
 
 /*global varible for work around*/
 static bool g_display_on = true;
+static p_tegra_dc_bl_output bl_output;
 
 static void mhl_gpio_switch(int on)
 {
@@ -114,7 +149,7 @@ static bool kernel_1st_panel_init = true;
 #define BACKLIGHT_MAX 255
 
 #define ORIG_PWM_MAX 255
-#define ORIG_PWM_DEF 142
+#define ORIG_PWM_DEF 78
 #define ORIG_PWM_MIN 30
 
 #define MAP_SHARP_MAX 255
@@ -128,6 +163,9 @@ static bool kernel_1st_panel_init = true;
 #define MAP_AUO_MAX 255
 #define MAP_AUO_DEF 78
 #define MAP_AUO_MIN 7
+
+#define MAP_PWM_LOW_DEF         79
+#define MAP_PWM_HIGH_DEF        102
 
 static int max_pwm = MAP_SHARP_MAX;
 static int def_pwm = MAP_SHARP_DEF;
@@ -151,7 +189,6 @@ static unsigned char shrink_pwm(int val)
 
 	return shrink_br;
 }
-
 
 static int endeavor_backlight_notify(struct device *unused, int brightness)
 {
@@ -177,7 +214,7 @@ static struct platform_tegra_pwm_backlight_data endeavor_disp1_backlight_data = 
 	.gpio_conf_to_sfio	= TEGRA_GPIO_PW1,
 	.switch_to_sfio		= &tegra_gpio_disable,
 	.max_brightness		= 255,
-	.dft_brightness		= 85,
+	.dft_brightness		= 78,
 	.notify		= endeavor_backlight_notify,
 	.period			= 0xFF,
 	.clk_div		= 20,
@@ -4259,6 +4296,40 @@ static void endeavor_panel_onchg_resume(struct early_suspend *h)
 #endif /* onmode charge */
 #endif /* early suspend */
 
+#define CAB_LOW		1
+#define CAB_DEF		2
+#define CAB_HIGH	3
+
+static struct dentry *bkl_debugfs_root;
+
+static int bkl_calibration_get(void *data, u64 *val)
+{
+	DISP_INFO_LN("def_pwm = %d\n",def_pwm);
+	return 0;
+}
+
+static int bkl_calibration_set(void *data, u64 val)
+{
+	struct backlight_device *bl = platform_get_drvdata(&endeavor_disp1_backlight_device);
+	switch (val) {
+		case CAB_LOW:
+			def_pwm = MAP_PWM_LOW_DEF;
+		break;
+		case CAB_HIGH:
+			def_pwm = MAP_PWM_HIGH_DEF;
+		break;
+		case CAB_DEF:
+		default:
+			def_pwm = MAP_SHARP_DEF;
+	}
+	backlight_update_status(bl);
+
+	return 0;
+}
+
+DEFINE_SIMPLE_ATTRIBUTE(bkl_calibration_fops, bkl_calibration_get,
+			bkl_calibration_set, "%llu\n");
+
 int __init endeavor_panel_init(void)
 {
 	int err;
@@ -4281,6 +4352,7 @@ int __init endeavor_panel_init(void)
 		tegra_gpio_enable(panel_init_gpios[i].gpio);
 	}
 
+	bl_output = endeavor_bl_output_measured_a02;
 	tegra_get_board_info(&board_info);
 
 #ifdef CONFIG_HAS_EARLYSUSPEND
@@ -4330,39 +4402,20 @@ int __init endeavor_panel_init(void)
 	}
 
         /*switch PWM_setting by panel_id*/
-        switch (PANEL_MASK(g_panel_id)) {
-                case PANEL_ID_SHARP_HX_XA:
-                case PANEL_ID_SHARP_HX_C3:
-                case PANEL_ID_SHARP_HX_C4:
-		case PANEL_ID_SHARP_HX_C5:
-                case PANEL_ID_SHARP_NT_C1:
-                case PANEL_ID_SHARP_NT_C2:
-		case PANEL_ID_SHARP_NT_C2_9A:
-		case PANEL_ID_SHARP:
-                        min_pwm = MAP_SHARP_MIN;
-                        def_pwm = MAP_SHARP_DEF;
-                        max_pwm = MAP_SHARP_MAX;
-                        break;
-
-                case PANEL_ID_SONY_NT_C1:
-                case PANEL_ID_SONY_NT_C2:
-		case PANEL_ID_SONY:
-                        min_pwm = MAP_SONY_MIN;
-                        def_pwm = MAP_SONY_DEF;
-                        max_pwm = MAP_SONY_MAX;
-                        break;
-		case PANEL_ID_AUO_NT_C2:
-		case PANEL_ID_AUO_NT_X7:
-		case PANEL_ID_AUO:
-			min_pwm = MAP_AUO_MIN;
-			def_pwm = MAP_AUO_DEF;
-			max_pwm = MAP_AUO_MAX;
-			break;
+        switch (g_panel_id & BKL_CAB_MASK) {
+		case BKL_CAB_LOW:
+			def_pwm = MAP_PWM_LOW_DEF;
+		break;
+		case BKL_CAB_HIGH:
+			def_pwm = MAP_PWM_HIGH_DEF;
+		break;
+		case BKL_CAB_OFF:
+		case BKL_CAB_DEF:
 		default:
-			min_pwm = MAP_SHARP_MIN;
 			def_pwm = MAP_SHARP_DEF;
-			max_pwm = MAP_SHARP_MAX;
         }
+
+	g_panel_id &= ~BKL_CAB_MASK;
 
 	/*switch initial command by panel_id*/
 	switch (PANEL_MASK(g_panel_id)) {
@@ -4521,6 +4574,12 @@ int __init endeavor_panel_init(void)
 	INIT_WORK(&bkl_work, bkl_do_work);
 	bkl_wq = create_workqueue("bkl_wq");
 	setup_timer(&bkl_timer, bkl_update, 0);
+
+	bkl_debugfs_root = debugfs_create_dir("backlight", NULL);
+
+	if (!debugfs_create_file("calibration", 0644,
+				 bkl_debugfs_root, NULL, &bkl_calibration_fops))
+		goto failed;
 
 failed:
 	DISP_INFO_OUT();
