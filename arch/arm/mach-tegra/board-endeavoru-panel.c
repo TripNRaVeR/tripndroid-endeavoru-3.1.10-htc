@@ -4193,9 +4193,10 @@ struct early_suspend endeavor_panel_onchg_suspender;
 
 static void endeavor_panel_early_suspend(struct early_suspend *h)
 {
+	struct backlight_device *bl = platform_get_drvdata(&endeavor_disp1_backlight_device);
+
 	DISP_INFO_IN();
 
-	struct backlight_device *bl = platform_get_drvdata(&endeavor_disp1_backlight_device);
 	if (bl && bl->props.bkl_on) {
 		bl->props.bkl_on = 0;
 		del_timer_sync(&bkl_timer);
@@ -4213,9 +4214,10 @@ static void endeavor_panel_early_suspend(struct early_suspend *h)
 
 static void endeavor_panel_late_resume(struct early_suspend *h)
 {
+	unsigned i;
+
 	DISP_INFO_IN();
 
-	unsigned i;
 	for (i = 0; i < num_registered_fb; i++)
 		fb_blank(registered_fb[i], FB_BLANK_UNBLANK);
 
@@ -4226,9 +4228,10 @@ static void endeavor_panel_late_resume(struct early_suspend *h)
 #ifdef CONFIG_HTC_ONMODE_CHARGING
 static void endeavor_panel_onchg_suspend(struct early_suspend *h)
 {
+	struct backlight_device *bl = platform_get_drvdata(&endeavor_disp1_backlight_device);
+
 	DISP_INFO_IN();
 
-	struct backlight_device *bl = platform_get_drvdata(&endeavor_disp1_backlight_device);
 	if (bl && bl->props.bkl_on) {
 		bl->props.bkl_on = 0;
 		del_timer_sync(&bkl_timer);
@@ -4244,8 +4247,9 @@ static void endeavor_panel_onchg_suspend(struct early_suspend *h)
 
 static void endeavor_panel_onchg_resume(struct early_suspend *h)
 {
-	DISP_INFO_IN();
 	unsigned i;
+
+	DISP_INFO_IN();
 
 	fb_blank(registered_fb[0], FB_BLANK_UNBLANK);
 
@@ -4258,6 +4262,9 @@ static void endeavor_panel_onchg_resume(struct early_suspend *h)
 int __init endeavor_panel_init(void)
 {
 	int err;
+	int i = 0;
+	int pin_count;
+
 	struct resource __maybe_unused *res;
 	struct board_info board_info;
 
@@ -4268,8 +4275,8 @@ int __init endeavor_panel_init(void)
 		DISP_ERR("gpio request failed\n");
 		goto failed;
 	}
-	int i = 0;
-	int pin_count = ARRAY_SIZE(panel_init_gpios);
+
+	pin_count = ARRAY_SIZE(panel_init_gpios);
 	for (i = 0; i < pin_count; i++) {
 		tegra_gpio_enable(panel_init_gpios[i].gpio);
 	}
