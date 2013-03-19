@@ -304,9 +304,6 @@ static struct vibrator_platform_data vibrator_data = {
 		.name = "vibrator",
 		.bank = 0,
 	},
-	.pwm_gpio = TEGRA_GPIO_PH0,
-	.ena_gpio = TEGRA_GPIO_PF1,
-	.pwr_gpio = TEGRA_GPIO_PE7,
 };
 static struct platform_device tegra_vibrator = {
 	.name= VIBRATOR_NAME,
@@ -317,6 +314,12 @@ static struct platform_device tegra_vibrator = {
 };
 static void tripndroid_vibrator_init(void)
 {
+	vibrator_data.pwm_gpio = TEGRA_GPIO_PH0;
+	vibrator_data.ena_gpio = TEGRA_GPIO_PF1;
+
+	//vibrator_data.pwm_gpio = -1;
+	//vibrator_data.ena_gpio = -1;
+
 	platform_device_register(&tegra_vibrator);
 }
 #endif
