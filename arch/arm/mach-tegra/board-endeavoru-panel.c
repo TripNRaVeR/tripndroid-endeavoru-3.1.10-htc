@@ -59,7 +59,6 @@ static struct regulator *v_lcmio_1v8 = NULL;
 
 static struct regulator *endeavor_hdmi_reg = NULL;
 static struct regulator *endeavor_hdmi_pll = NULL;
-static struct regulator *endeavor_hdmi_vddio = NULL;
 #endif
 
 #define LCM_TE			TEGRA_GPIO_PJ1
@@ -90,11 +89,6 @@ static struct gpio panel_init_gpios[] = {
     {MHL_RST,       GPIOF_OUT_INIT_HIGH,    "mhl_rst"},
     {MHL_HPD,       GPIOF_IN,               "mhl_hpd"},
     {MHL_3V3_EN,    GPIOF_OUT_INIT_HIGH,    "mhl_3v3_en"},
-};
-
-static struct gpio endeavor_gpios[] = {
-	{MHL_1V2_EN,	GPIOF_OUT_INIT_LOW,	"mhl_1v2_en"},
-	{MHL_3V3_EN,	GPIOF_OUT_INIT_LOW,	"mhl_3v3_en"},
 };
 
 static tegra_dc_bl_output endeavor_bl_output_measured_a02 = {
@@ -136,15 +130,6 @@ static atomic_t sd_brightness = ATOMIC_INIT(255);
 /*global varible for work around*/
 static bool g_display_on = true;
 static p_tegra_dc_bl_output bl_output;
-
-static void mhl_gpio_switch(int on)
-{
-	int i = 0;
-	for(i = 0 ; i < ARRAY_SIZE(endeavor_gpios) ; i++)
-		gpio_set_value(endeavor_gpios[i].gpio, on);
-}
-
-static bool kernel_1st_panel_init = true;
 
 #define BACKLIGHT_MAX 255
 
@@ -681,7 +666,6 @@ static u8 init_cmd[] = {0xB9,0xFF,0x83,0x92};
 static u8 eq_cmd[] = {0xD5,0x00,0x00,0x02};
 static u8 ptbf_cmd[] = {0xBF,0x05,0x60,0x02};
 static u8 pwm_freq_hx[] = {0xC9,0x1F,0x01};
-static u8 porch[] = {0x3B,0x03,0x03,0x07,0x02,0x02};
 static u8 flash_issue[] = {0xC6,0x35,0x00,0x00,0x04};
 static u8 dsi_set[] = {0xBA,0x11,0x83,0x00,0xD6,0xC6,0x00,0x0A};
 static u8 stba[] = {0xC0,0x01,0x94};
