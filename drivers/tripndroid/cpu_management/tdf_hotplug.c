@@ -131,21 +131,19 @@ static unsigned int calculate_load(void)
 	unsigned int nr_run;
 	unsigned int select_threshold;
 
-	if (powersaving_active == 1) {
-		select_threshold =  ARRAY_SIZE(powersaving_thresholds);
+	if (!powersaving_active) {
+		select_threshold =  ARRAY_SIZE(normal_thresholds);
 	}
 	else {
-		select_threshold =  ARRAY_SIZE(normal_thresholds);
+		select_threshold =  ARRAY_SIZE(powersaving_thresholds);
 	}
 
 	for (nr_run = 1; nr_run < select_threshold; nr_run++) {
 		unsigned int nr_threshold;
-		if (powersaving_active == 1) {
-			nr_threshold = powersaving_thresholds[nr_run - 1];
-		}
-		else {
+		if (!powersaving_active)
 			nr_threshold = normal_thresholds[nr_run - 1];
-		}
+		else
+			nr_threshold = powersaving_thresholds[nr_run - 1];
 
 		if (nr_run_last <= nr_run)
 			nr_threshold += TDF_FSHIFT / nr_run_hysteresis;
@@ -201,7 +199,7 @@ static int mp_decision(void)
 					next_state = TRIPNDROID_HP_UP;
 			}
 		}
-		else if (current_run <= NwNs_Threshold[index+1]) {
+		else if ((online_cpus > 1) && (current_run <= NwNs_Threshold[index+1])) {
 			if (total_time >= TwTs_Threshold[index+1]) {
 				if (online_cpus > req_cpus)
 					next_state = TRIPNDROID_HP_DOWN;
