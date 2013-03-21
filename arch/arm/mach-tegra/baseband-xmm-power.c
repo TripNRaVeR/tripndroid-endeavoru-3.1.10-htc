@@ -160,7 +160,7 @@ MODULE_PARM_DESC(autosuspend_delay,	"baseband xmm power - autosuspend delay for 
 		msleep(x);
 
 static bool short_autosuspend;
-static int short_autosuspend_delay = 100;
+static int short_autosuspend_delay = 50;
 
 static struct usb_device_id xmm_pm_ids[] = {
 	{ USB_DEVICE(VENDOR_ID, PRODUCT_ID),
