@@ -132,7 +132,7 @@ EXPORT_SYMBOL(modem_flash);
 unsigned long modem_pm = 1;
 EXPORT_SYMBOL(modem_pm);
 
-unsigned long autosuspend_delay = 3000; /* 5000 msec */
+unsigned long autosuspend_delay = 2000; /* 5000 msec */
 EXPORT_SYMBOL(autosuspend_delay);
 
 unsigned long enum_delay_ms = 1000; /* ignored if !modem_flash */
