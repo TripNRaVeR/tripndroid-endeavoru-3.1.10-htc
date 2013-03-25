@@ -97,9 +97,6 @@ static void early_suspend(struct work_struct *work)
 	int abort = 0;
 
 	pr_info("[R] early_suspend start\n");
-#ifdef CONFIG_TRIPNDROID_FRAMEWORK
-	tdf_suspend_state = 1;
-#endif
 	mutex_lock(&early_suspend_lock);
 	spin_lock_irqsave(&state_lock, irqflags);
 	if (state == SUSPEND_REQUESTED) {
@@ -131,6 +128,9 @@ static void early_suspend(struct work_struct *work)
 	mutex_unlock(&early_suspend_lock);
 
 	if (debug_mask & DEBUG_SUSPEND)
+#ifdef CONFIG_TRIPNDROID_FRAMEWORK
+	tdf_suspend_state = 1;
+#endif
 		pr_info("[R] early_suspend: sync\n");
 
 	sys_sync();
@@ -149,9 +149,7 @@ static void late_resume(struct work_struct *work)
 	int abort = 0;
 
 	pr_info("[R] late_resume start\n");
-#ifdef CONFIG_TRIPNDROID_FRAMEWORK
-	tdf_suspend_state = 0;
-#endif
+
 	mutex_lock(&early_suspend_lock);
 	spin_lock_irqsave(&state_lock, irqflags);
 	if (state == SUSPENDED) {
@@ -180,6 +178,9 @@ static void late_resume(struct work_struct *work)
 		}
 	}
 	if (debug_mask & DEBUG_SUSPEND)
+#ifdef CONFIG_TRIPNDROID_FRAMEWORK
+	tdf_suspend_state = 0;
+#endif
 		pr_info("late_resume: done\n");
 abort:
 	mutex_unlock(&early_suspend_lock);
