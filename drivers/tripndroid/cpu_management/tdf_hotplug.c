@@ -303,7 +303,7 @@ static void tripndroid_hp_early_suspend(struct early_suspend *handler)
 
 	mutex_lock(&tripndroid_hp_cpu_lock);
 	if (!tdf_suspend_state) {
-	tdf_suspend_state = 0;
+	tdf_suspend_state = 1;
 	}
 	mutex_unlock(&tripndroid_hp_cpu_lock);
 
