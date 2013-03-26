@@ -82,11 +82,6 @@ static int try_to_freeze_tasks(bool sig_only)
 			wq_busy = freeze_workqueues_busy();
 			todo += wq_busy;
 		}
-
-		if (todo && has_wake_lock(WAKE_LOCK_SUSPEND)) {
-			wakeup = 1;
-			break;
-		}
 		if (!todo || time_after(jiffies, end_time))
 			break;
 
