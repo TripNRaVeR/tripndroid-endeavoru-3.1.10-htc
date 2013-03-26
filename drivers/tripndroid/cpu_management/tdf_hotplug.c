@@ -318,6 +318,14 @@ static void tripndroid_hp_early_suspend(struct early_suspend *handler)
 static void __cpuinit tripndroid_hp_late_resume(struct early_suspend *handler)
 {
 	int i;
+	int max_cpus;
+
+	if (powersaving_active == 1) {
+	max_cpus = 2;
+	}
+	else {
+	max_cpus = CONFIG_NR_CPUS;
+	}
 
 	mutex_lock(&tripndroid_hp_cpu_lock);
 	if (tdf_suspend_state) {
@@ -325,7 +333,7 @@ static void __cpuinit tripndroid_hp_late_resume(struct early_suspend *handler)
 	}
 	mutex_unlock(&tripndroid_hp_cpu_lock);
 
-	for (i = 1; i < CONFIG_NR_CPUS; i++) {
+	for (i = 1; i < max_cpus; i++) {
 		if (!cpu_online(i))
 			cpu_up(i);
 
