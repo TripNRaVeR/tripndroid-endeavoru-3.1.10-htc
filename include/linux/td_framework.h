@@ -22,5 +22,7 @@
 
 #define TDF_FREQ_IDLE_MIN	102000
 
+#define TDF_FREQ_PWRSAVE_MAX	1300000
+
 /* output debug info to kmsg, adds some heavy overhead! */
 #define TDF_DEBUG		0
