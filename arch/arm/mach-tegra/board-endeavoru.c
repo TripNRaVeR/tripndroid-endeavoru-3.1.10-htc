@@ -173,19 +173,18 @@ static struct tegra_thermal_data thermal_data = {
 static struct led_i2c_config lp5521_led_config[] = {
 	{
 		.name = "amber",
-                .led_cur = 95,
-                .led_lux = 100
+		.led_cur = 50,
+		.led_lux = 80,
 	},
 	{
 		.name = "green",
-                .led_cur = 95,
-                .led_lux = 100
+		.led_cur = 30,
+		.led_lux = 70,
 	},
 	{
 		.name = "button-backlight",
-                .led_cur = 2,
-                .led_lux = 55,
-
+		.led_cur = 95,
+		.led_lux = 35,
 	},
 };
 static struct led_i2c_platform_data led_data = {
