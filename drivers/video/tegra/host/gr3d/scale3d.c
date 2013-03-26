@@ -49,6 +49,7 @@ static void scale3d_enable(int enable);
 
 #ifdef CONFIG_TRIPNDROID_FRAMEWORK
 extern unsigned int powersaving_active;
+extern unsigned int tdf_suspend_state;
 #endif
 
 #define POW2(x) ((x) * (x))
@@ -178,11 +179,20 @@ static void scale3d_clocks(unsigned long percent)
 		if (tegra_get_chipid() == TEGRA_CHIPID_TEGRA3)
 			clk_set_rate(scale3d.clk_3d2, 0);
 
+#ifdef CONFIG_TRIPNDROID_FRAMEWORK
+		if (powersaving_active == 1 && tdf_suspend_state == 0) {
+			clk_set_rate(scale3d.clk_3d, 200000000);
+		}
+		else {
+#endif
 		if (is_tegra_camera_on())
 			clk_set_rate(scale3d.clk_3d, CAMERA_3D_CLK);
 		else
 			clk_set_rate(scale3d.clk_3d, hz);
 
+#ifdef CONFIG_TRIPNDROID_FRAMEWORK
+}
+#endif
 		if (scale3d.p_scale_emc) {
 			long after = (long) clk_get_rate(scale3d.clk_3d);
 			hz = after * scale3d.emc_slope + scale3d.emc_offset;
@@ -246,6 +256,13 @@ static void reset_3d_clocks(void)
 	int i = 0;
 	ktime_t t;
 
+#ifdef CONFIG_TRIPNDROID_FRAMEWORK
+		if (powersaving_active == 1 && tdf_suspend_state == 0) {
+			clk_set_rate(scale3d.clk_3d, 200000000);
+			clk_set_rate(scale3d.clk_3d2, 200000000);
+		}
+		else {
+#endif
 	if (clk_get_rate(scale3d.clk_3d) != scale3d.max_rate_3d) {
 		if (is_tegra_camera_on())
 			clk_set_rate(scale3d.clk_3d, CAMERA_3D_CLK);
@@ -265,6 +282,9 @@ static void reset_3d_clocks(void)
 					clk_round_rate(scale3d.clk_3d_emc, UINT_MAX));
 		}
 	}
+#ifdef CONFIG_TRIPNDROID_FRAMEWORK
+}
+#endif
 	t = ktime_get();
 
 	hz = clk_get_rate(scale3d.clk_3d);
@@ -606,11 +626,20 @@ static void do_scale(int diff)
 	if (tegra_get_chipid() == TEGRA_CHIPID_TEGRA3)
 		clk_set_rate(scale3d.clk_3d2, 0);
 
+#ifdef CONFIG_TRIPNDROID_FRAMEWORK
+		if (powersaving_active == 1 && tdf_suspend_state == 0) {
+			clk_set_rate(scale3d.clk_3d, 200000000);
+		}
+		else {
+#endif
 	if (is_tegra_camera_on())
 		clk_set_rate(scale3d.clk_3d, CAMERA_3D_CLK);
 	else
 		clk_set_rate(scale3d.clk_3d, hz);
 
+#ifdef CONFIG_TRIPNDROID_FRAMEWORK
+}
+#endif
 	if (scale3d.p_scale_emc) {
 		long after = (long) clk_get_rate(scale3d.clk_3d);
 		hz = after * scale3d.emc_slope + scale3d.emc_offset;
