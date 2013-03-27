@@ -901,16 +901,16 @@ static int baseband_xmm_power_off(struct platform_device *device)
 	}
 #endif
 	/*set Radio fatal Pin to OutPut Low*/
-	ret=gpio_direction_output(TEGRA_GPIO_PN2,0);
-	if (ret < 0)
-			pr_err("%s: set Radio fatal Pin to Output error\n", __func__);
+	gpio_direction_output(TEGRA_GPIO_PN2,0);
+//	if (ret < 0)
+//			pr_err("%s: set Radio fatal Pin to Output error\n", __func__);
 
 	/*set BB2AP_SUSPEND_REQ Pin (TEGRA_GPIO_PV0) to OutPut Low*/
-	ret=gpio_direction_output(TEGRA_GPIO_PV0,0);
-	if (ret < 0)
-			pr_err("%s: set BB2AP_SUSPEND_REQ Pin to Output error\n", __func__);	
+	gpio_direction_output(TEGRA_GPIO_PV0,0);
+//	if (ret < 0)
+//			pr_err("%s: set BB2AP_SUSPEND_REQ Pin to Output error\n", __func__);	
 
-	pr_debug("%s }\n", __func__);
+//	pr_debug("%s }\n", __func__);
 
 	return 0;
 }
@@ -946,8 +946,8 @@ static ssize_t baseband_xmm_onoff(struct device *dev,
 	}
 #endif /* !BB_XMM_OEM1 */
 
-	pr_debug("%s power_onoff=%d count=%d, buf[0]=0x%x\n",
-		__func__, power_onoff, count, buf[0]);
+//	pr_debug("%s power_onoff=%d count=%d, buf[0]=0x%x\n",
+//		__func__, power_onoff, count, buf[0]);
 
 	if (power_onoff == 0)
 		baseband_xmm_power_off(device);
@@ -977,10 +977,13 @@ void baseband_xmm_set_power_status(unsigned int status)
 	switch (status) {
 	case BBXMM_PS_L0:
 		if (modem_sleep_flag) {
+/*
 #ifdef CONFIG_REMOVE_HSIC_L3_STATE
             pr_info("%s, resume to L0 with modem_sleep_flag", __func__ );
 #else
-			pr_info("%s Resume from L3 without calling resume function\n",  __func__);
+*/
+//			pr_info("%s Resume from L3 without calling resume function\n",  __func__);
+#ifndef CONFIG_REMOVE_HSIC_L3_STATE
 			baseband_xmm_power_driver_handle_resume(data);
 #endif
 		}
@@ -1034,9 +1037,11 @@ void baseband_xmm_set_power_status(unsigned int status)
 		spin_lock_irqsave(&xmm_lock, flags);
 		if (wakeup_pending) {
 			spin_unlock_irqrestore(&xmm_lock, flags);
+/*
 #ifdef CONFIG_REMOVE_HSIC_L3_STATE
 			pr_info("%s: wakeup pending\n", __func__);
 #endif
+*/
 			baseband_xmm_power_L2_resume();
 		} else {
 			spin_unlock_irqrestore(&xmm_lock, flags);
@@ -1044,7 +1049,7 @@ void baseband_xmm_set_power_status(unsigned int status)
 			modem_sleep_flag = true;
 		}
 		if (short_autosuspend && (&usbdev->dev)) {
-				pr_debug("autosuspend delay %d ms,disable short_autosuspend\n", autosuspend_delay);
+//				pr_debug("autosuspend delay %d ms,disable short_autosuspend\n", autosuspend_delay);
 				queue_work(workqueue_susp, &work_defaultsusp);
 				short_autosuspend = false;
 		}
