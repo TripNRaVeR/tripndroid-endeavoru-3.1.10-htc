@@ -254,7 +254,7 @@ static void dump_otg_state(void)
 	status = tegra_clone->int_status;
 
 	/* Debug prints */
-	USBH_INFO("%s(%d) status = 0x%x\n", __func__, __LINE__, status);
+	USBH_INFO("%s(%d) status = 0x%ld\n", __func__, __LINE__, status);
 	if ((status & USB_ID_INT_STATUS) &&
 			(status & USB_VBUS_INT_STATUS))
 		USBH_INFO("%s(%d) got vbus & id interrupt\n", __func__, __LINE__);
@@ -268,9 +268,9 @@ static void dump_otg_state(void)
 	spin_lock_irqsave(&tegra_clone->lock, flags);
 	val = otg_readl(tegra_clone, USB_PHY_WAKEUP);
 	spin_unlock_irqrestore(&tegra_clone->lock, flags);
-	USBH_INFO("%s(%d) USB_PHY_WAKEUP val = 0x%x\n", __func__, __LINE__, val);
+	USBH_INFO("%s(%d) USB_PHY_WAKEUP val = 0x%ld\n", __func__, __LINE__, val);
 	if (val & (USB_VBUS_INT_EN | USB_ID_INT_EN)) {
-		USBH_INFO("%s(%d) PHY_WAKEUP = 0x%x\n", __func__, __LINE__, val);
+		USBH_INFO("%s(%d) PHY_WAKEUP = 0x%ld\n", __func__, __LINE__, val);
 	}
 
 
