@@ -845,13 +845,6 @@ static int tegra3_cpu_clk_set_rate(struct clk *c, unsigned long rate)
 	bool skip_to_backup =
 		skip && (clk_get_rate_all_locked(c) >= SKIPPER_ENGAGE_RATE);
 
-    /* for NV platform, all G cores consume the same clk source
-     *
-     * to port to any other platforms,
-     * pls. modify lt_rate to lt_rate[NR_CPUS] accordingly
-     */
-    static unsigned long lt_rate[NR_CPUS];
-
 	if (c->dvfs) {
 		if (!c->dvfs->dvfs_rail)
 			return -ENOSYS;
