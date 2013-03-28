@@ -1234,8 +1234,8 @@ static ssize_t ps_parameters_store(struct device *dev,
 	for (i = 0; i < 2; i++)
 		token[i] = strsep((char **)&buf, " ");
 
-	lpi->ps_thd_set = strict_strtoul(token[0], NULL, 16);
-	PS_cmd_test_value = strict_strtoul(token[1], NULL, 16);
+	lpi->ps_thd_set = simple_strtoul(token[0], NULL, 16);
+	PS_cmd_test_value = simple_strtoul(token[1], NULL, 16);
 	printk(KERN_INFO
 		"[PS][CM3628]Set lpi->ps_thd_set = 0x%x, PS_cmd_cmd:value = 0x%x\n",
 		lp_info->ps_thd_set, PS_cmd_test_value);
@@ -1616,7 +1616,7 @@ static ssize_t ls_adc_table_store(struct device *dev,
 	printk(KERN_INFO "[LS][CM3628]%s\n", buf);
 	for (i = 0; i < 10; i++) {
 		token[i] = strsep((char **)&buf, " ");
-		tempdata[i] = strict_strtoul(token[i], NULL, 16);
+		tempdata[i] = simple_strtoul(token[i], NULL, 16);
 		if (tempdata[i] < 1 || tempdata[i] > 0xffff) {
 			printk(KERN_ERR
 			"[LS][CM3628 error] adc_table[%d] =  0x%x Err\n",
