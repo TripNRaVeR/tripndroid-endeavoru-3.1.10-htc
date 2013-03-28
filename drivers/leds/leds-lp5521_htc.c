@@ -29,7 +29,7 @@
 #include <linux/regulator/consumer.h>
 #include <mach/mfootprint.h>
 #define LP5521_MAX_LEDS			3	/* Maximum number of LEDs */
-#define LED_DEBUG				1
+#define LED_DEBUG				0
 #if LED_DEBUG
 	#define D(x...) printk(KERN_DEBUG "[LED]" x)
 	#define I(x...) printk(KERN_INFO "[LED]" x)
