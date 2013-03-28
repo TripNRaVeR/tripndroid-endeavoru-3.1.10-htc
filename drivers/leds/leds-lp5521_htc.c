@@ -175,7 +175,7 @@ static void lp5521_led_enable(struct i2c_client *client)
 	/* === enable CHIP_EN === */
 	data = 0x40;
 	ret = i2c_write_block(client, 0x00, &data, 1);
-	udelay(550);
+	udelay(150);
 	/* === configuration control in power save mode=== */
 	data = 0x29;
 	ret = i2c_write_block(client, 0x08, &data, 1);
@@ -216,13 +216,13 @@ static void lp5521_green_on(struct i2c_client *client)
 	else
 		data = 0x0f;
 	ret = i2c_write_block(client, 0x01, &data, 1);
-	udelay(200);
+	udelay(100);
 	if ( backlight_mode == 2 )
 		data = 0x42;
 	else
 		data = 0x40;
 	ret = i2c_write_block(client, 0x00, &data, 1);
-	udelay(500);
+	udelay(100);
 	mutex_unlock(&led_mutex);
 	I(" %s ---\n" , __func__);
 }
@@ -245,7 +245,7 @@ static void lp5521_green_blink(struct i2c_client *client)
 	else
 		data = 0x07;
 	ret = i2c_write_block(client, 0x01, &data, 1);
-	udelay(200);
+	udelay(100);
 
 	/* === function blink === */
 	/* === set pwm === */
@@ -288,13 +288,13 @@ static void lp5521_green_blink(struct i2c_client *client)
 	else
 		data = 0x0b;
 	ret = i2c_write_block(client, 0x01, &data, 1);
-	udelay(200);
+	udelay(100);
 	if ( backlight_mode == 2 )
 		data = 0x4a;
 	else
 		data = 0x48;
 	ret = i2c_write_block(client, 0x00, &data, 1);
-	udelay(500);
+	udelay(100);
 	mutex_unlock(&led_mutex);
 	I(" %s ---\n" , __func__);
 }
@@ -321,13 +321,13 @@ static void lp5521_amber_on(struct i2c_client *client)
 	else
 		data = 0x33;
 	ret = i2c_write_block(client, 0x01, &data, 1);
-	udelay(200);
+	udelay(100);
 	if ( backlight_mode == 2 )
 		data = 0x42;
 	else
 		data = 0x40;
 	ret = i2c_write_block(client, 0x00, &data, 1);
-	udelay(500);
+	udelay(100);
 	mutex_unlock(&led_mutex);
 	I(" %s ---\n" , __func__);
 }
@@ -351,7 +351,7 @@ static void lp5521_amber_blink(struct i2c_client *client)
 	else
 		data = 0x13;
 	ret = i2c_write_block(client, 0x01, &data, 1);
-	udelay(200);
+	udelay(100);
 
 	/* === function blink === */
 	/* === wait 0.999s === */
@@ -386,13 +386,13 @@ static void lp5521_amber_blink(struct i2c_client *client)
 	else
 		data = 0x23;
 	ret = i2c_write_block(client, 0x01, &data, 1);
-	udelay(200);
+	udelay(100);
 	if ( backlight_mode == 2 )
 		data = 0x62;
 	else
 		data = 0x60;
 	ret = i2c_write_block(client, 0x00, &data, 1);
-	udelay(550);
+	udelay(150);
 	mutex_unlock(&led_mutex);
 	I(" %s ---\n" , __func__);
 }
@@ -415,7 +415,7 @@ static void lp5521_amber_low_blink(struct i2c_client *client)
 	else
 		data = 0x13;
 	ret = i2c_write_block(client, 0x01, &data, 1);
-	udelay(200);
+	udelay(100);
 
 	/* === function low blink === */
 	/* === set pwm === */
@@ -450,13 +450,13 @@ static void lp5521_amber_low_blink(struct i2c_client *client)
 	else
 		data = 0x23;
 	ret = i2c_write_block(client, 0x01, &data, 1);
-	udelay(200);
+	udelay(100);
 	if ( backlight_mode == 2 )
 		data = 0x62;
 	else
 		data = 0x60;
 	ret = i2c_write_block(client, 0x00, &data, 1);
-	udelay(550);
+	udelay(150);
 	mutex_unlock(&led_mutex);
 	I(" %s ---\n" , __func__);
 }
@@ -479,7 +479,7 @@ static void lp5521_dual_color_blink(struct i2c_client *client)
 	else
 		data = 0x17;
 	ret = i2c_write_block(client, 0x01, &data, 1);
-	udelay(200);
+	udelay(100);
 
 
 	/* === function fast blink === */
@@ -508,14 +508,14 @@ static void lp5521_dual_color_blink(struct i2c_client *client)
 	ret = i2c_write_block(client, 0x18, &data, 1);
 	data = 0x04;
 	ret = i2c_write_block(client, 0x19, &data, 1);
-	udelay(550);
+	udelay(150);
 
 	/* === trigger wr === */
 	data = 0xe0;
 	ret = i2c_write_block(client, 0x30, &data, 1);
 	data = 0x80;
 	ret = i2c_write_block(client, 0x31, &data, 1);
-	udelay(550);
+	udelay(150);
 	/* === set pwm === */
 	data = 0x40;
 	ret = i2c_write_block(client, 0x32, &data, 1);
@@ -546,7 +546,7 @@ static void lp5521_dual_color_blink(struct i2c_client *client)
 	ret = i2c_write_block(client, 0x3c, &data, 1);
 	data = 0x02;
 	ret = i2c_write_block(client, 0x3d, &data, 1);
-	udelay(550);
+	udelay(150);
 
 	/* === run program === */
 	if ( backlight_mode == 2 )
@@ -554,13 +554,13 @@ static void lp5521_dual_color_blink(struct i2c_client *client)
 	else
 		data = 0x2b;
 	ret = i2c_write_block(client, 0x01, &data, 1);
-	udelay(200);
+	udelay(100);
 	if ( backlight_mode == 2 )
 		data = 0x6a;
 	else
 		data = 0x68;
 	ret = i2c_write_block(client, 0x00, &data, 1);
-	udelay(550);
+	udelay(150);
 	mutex_unlock(&led_mutex);
 	I(" %s ---\n" , __func__);
 }
@@ -582,7 +582,7 @@ static void lp5521_backlight_on(struct i2c_client *client)
 		ret = i2c_write_block(client, 0x04, &data, 1);
 		if( ret < 0 )
 			break;
-		msleep(25);
+		msleep(5);
 	}
 	mutex_unlock(&led_mutex);
 	I(" %s ---\n" , __func__);
@@ -605,21 +605,21 @@ static void lp5521_backlight_off(struct i2c_client *client)
 		ret = i2c_write_block(client, 0x04, &data, 1);
 		if( ret < 0 )
 			break;
-		msleep(25);
+		msleep(5);
 	}
 	if( current_mode == 0 ) {
 		if( suspend_mode == 1 ) {
 			/* === reset register === */
 			data = 0xff;
 			ret = i2c_write_block(client, 0x0d, &data, 1);
-			udelay(550);
+			udelay(150);
 			gpio_direction_output(pdata->ena_gpio, 0);
 			I(" no LED command now in suspend, reset chip & gpio, no ack in i2c 0x32 is correct in LED chip lp5521.\n");
 		} else {
 			/* === disable CHIP_EN === */
 			data = 0x00;
 			ret = i2c_write_block(client, 0x00, &data, 1);
-			udelay(550);
+			udelay(150);
 			gpio_direction_output(pdata->ena_gpio, 0);
 			I(" no LED command now, disable chip & gpio.\n");
 		}
@@ -648,27 +648,27 @@ static void lp5521_dual_off(struct i2c_client *client)
 	if( backlight_mode == 1 ) {
 		data = 0x03;
 		ret = i2c_write_block(client, 0x01, &data, 1);
-		udelay(200);
+		udelay(100);
 	} else if ( backlight_mode == 2 )  {
 		data = 0x02;
 		ret = i2c_write_block(client, 0x01, &data, 1);
-		udelay(200);
+		udelay(100);
 	} else {
 		data = 0x00;
 		ret = i2c_write_block(client, 0x01, &data, 1);
-		udelay(200);
+		udelay(100);
 		if( suspend_mode == 1 ) {
 			/* === reset register === */
 			data = 0xff;
 			ret = i2c_write_block(client, 0x0d, &data, 1);
-			udelay(550);
+			udelay(150);
 			gpio_direction_output(pdata->ena_gpio, 0);
 			I(" no LED command now in suspend, reset chip & gpio, no ack in i2c 0x32 is correct in LED chip lp5521.\n");
 		} else {
 			/* === disable CHIP_EN === */
 			data = 0x00;
 			ret = i2c_write_block(client, 0x00, &data, 1);
-			udelay(550);
+			udelay(150);
 			gpio_direction_output(pdata->ena_gpio, 0);
 			I(" no LED command now in idle, disable chip & gpio.\n");
 		}
@@ -859,7 +859,7 @@ static void led_powerkey_work_func(struct work_struct *work)
 			udelay(200);
 			data = 0x42;
 			ret = i2c_write_block(client, 0x00, &data, 1);
-			udelay(550);
+			udelay(150);
 		}else if( current_mode == 3 ) {
 			/* === run program with red direct and blue run program === */
 			data = 0x32;
@@ -867,7 +867,7 @@ static void led_powerkey_work_func(struct work_struct *work)
 			udelay(200);
 			data = 0x42;
 			ret = i2c_write_block(client, 0x00, &data, 1);
-			udelay(550);
+			udelay(150);
 		}else if( current_mode == 2 ) {
 			/* === run program with green run and blue run program === */
 			data = 0x0a;
@@ -875,7 +875,7 @@ static void led_powerkey_work_func(struct work_struct *work)
 			udelay(200);
 			data = 0x4a;
 			ret = i2c_write_block(client, 0x00, &data, 1);
-			udelay(550);
+			udelay(150);
 		}else if( current_mode == 4 || current_mode == 5 ) {
 			/* === run program with red run and blue run program === */
 			data = 0x22;
@@ -883,7 +883,7 @@ static void led_powerkey_work_func(struct work_struct *work)
 			udelay(200);
 			data = 0x62;
 			ret = i2c_write_block(client, 0x00, &data, 1);
-			udelay(550);
+			udelay(150);
 		}else if( current_mode == 6 ) {
 			/* === run program with red and green run and blue run program === */
 			data = 0x2a;
@@ -891,7 +891,7 @@ static void led_powerkey_work_func(struct work_struct *work)
 			udelay(200);
 			data = 0x6a;
 			ret = i2c_write_block(client, 0x00, &data, 1);
-			udelay(550);
+			udelay(150);
 		}else {
 			/* === run program with blue load program === */
 			data = 0x02;
@@ -899,7 +899,7 @@ static void led_powerkey_work_func(struct work_struct *work)
 			udelay(200);
 			data = 0x42;
 			ret = i2c_write_block(client, 0x00, &data, 1);
-			udelay(550);
+			udelay(150);
 		}
 	}else if (backlight_mode == 0) {
 		/* === set blue channel to direct PWM control mode === */
@@ -964,7 +964,7 @@ static void led_powerkey_work_func(struct work_struct *work)
 			/* === disable CHIP_EN === */
 			data = 0x00;
 			ret = i2c_write_block(client, 0x00, &data, 1);
-			udelay(550);
+			udelay(150);
 			gpio_direction_output(pdata->ena_gpio, 0);
 			I(" no LED command now, disable chip & gpio.\n");
 		}
