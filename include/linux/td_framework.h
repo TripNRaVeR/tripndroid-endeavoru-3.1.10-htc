@@ -17,7 +17,7 @@
  */
 
 /* cpufreq sleep min/max */
-#define TDF_FREQ_SLEEP_MAX	475000
+#define TDF_FREQ_SLEEP_MAX	204000
 #define TDF_FREQ_SLEEP_MIN	51000
 
 #define TDF_FREQ_IDLE_MIN	102000
