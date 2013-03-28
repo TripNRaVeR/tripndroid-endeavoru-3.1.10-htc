@@ -344,19 +344,19 @@ EXPORT_SYMBOL_GPL(trigger_silent_reset);
 
 static DEVICE_ATTR(debug_handler, S_IRUSR | S_IWUSR | S_IRGRP, NULL, debug_handler);
 
-int Modem_is_6360()
+int Modem_is_6360(void)
 {
 	return s_sku_id == SKU_ID_ENRC2_TMO;
 }
 EXPORT_SYMBOL_GPL(Modem_is_6360);
 
-int Modem_is_6260()
+int Modem_is_6260(void)
 {
 	return ( s_sku_id == SKU_ID_ENRC2_GLOBAL || s_sku_id == SKU_ID_ENDEAVORU );
 }
 EXPORT_SYMBOL_GPL(Modem_is_6260);
 
-int Modem_is_IMC()
+int Modem_is_IMC(void)
 {
 	return ( machine_is_enrc2b() || machine_is_endeavoru() || machine_is_enrc2u() );
 }
@@ -564,7 +564,7 @@ int modem_on_for_usb_config(struct gpio *array, size_t num)
 }
 #endif
 
-int config_gpio_for_power_off()
+int config_gpio_for_power_off(void)
 {
 	int err=0;
 
