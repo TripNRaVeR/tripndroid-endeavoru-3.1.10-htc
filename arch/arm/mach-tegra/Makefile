@@ -326,6 +326,4 @@ endif
 # Kenson_Lee@20120615: add for packet filter
 obj-y += htc_port_list_lte.o
 
-obj-y 					+= htc_util.o
-
 obj-y += htc_monitor.o

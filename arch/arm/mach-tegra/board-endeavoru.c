@@ -77,7 +77,6 @@
 #include <mach/mhl.h>
 #include <mach/tegra-bb-power.h>
 #include <mach/htc_bdaddress.h>
-#include <mach/htc_util.h>
 #include "board.h"
 #include "clock.h"
 #include "board-endeavoru.h"
@@ -2127,11 +2126,6 @@ static void __init endeavoru_init(void)
 	proc = create_proc_read_entry("dying_processes", 0, NULL, dying_processors_read_proc, NULL);
 	if (!proc)
 		printk(KERN_ERR"Create /proc/dying_processes FAILED!\n");
-
-	if (!!(get_kernel_flag() & KERNEL_FLAG_PM_MONITOR) && board_mfg_mode() != BOARD_MFG_MODE_OFFMODE_CHARGING) {
-		htc_monitor_init();
-		htc_pm_monitor_init();
-	}
 }
 
 static void __init endeavoru_reserve(void)
