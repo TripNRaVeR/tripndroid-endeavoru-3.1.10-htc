@@ -462,13 +462,9 @@ static int android_switch_setup(struct usb_gadget *gadget,
 		const struct usb_ctrlrequest *c)
 {
 	int value = -EOPNOTSUPP;
-	u16 wIndex = le16_to_cpu(c->wIndex);
-	u16 wValue = le16_to_cpu(c->wValue);
 #if 0
 	u16 wLength = le16_to_cpu(c->wLength);
 #endif
-	struct usb_composite_dev *cdev = get_gadget_data(gadget);
-	struct usb_request *req = cdev->req;
 	/* struct android_dev *dev = _android_dev; */
 #if 0/* TODO */
 	switch (c->bRequestType & USB_TYPE_MASK) {
