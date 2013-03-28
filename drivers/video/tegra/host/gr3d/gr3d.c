@@ -38,6 +38,7 @@
 void nvhost_3dctx_restore_begin(struct host1x_hwctx_handler *p, u32 *ptr)
 {
 	/* set class to host */
+#include "class_ids.h"
 	ptr[0] = nvhost_opcode_setclass(NV_HOST1X_CLASS_ID,
 					host1x_uclass_incr_syncpt_base_r(), 1);
 	/* increment sync point base */
