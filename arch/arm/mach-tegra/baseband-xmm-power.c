@@ -1444,7 +1444,7 @@ static void baseband_xmm_power_defaultsusp(struct work_struct *work)
 	}
 
 	pm_runtime_set_autosuspend_delay(&usbdev->dev, autosuspend_delay);
-	pr_debug("%s set_autosuspend_delay <%d>", __func__, autosuspend_delay);	
+	pr_debug("%s set_autosuspend_delay <%ld>", __func__, autosuspend_delay);	
 }
 
 /* Do the work for CP initiated L2->L0 */
@@ -1603,7 +1603,7 @@ static void baseband_xmm_device_add_handler(struct usb_device *udev)
 		pm_runtime_set_autosuspend_delay(&udev->dev, autosuspend_delay);//for ICS 39kernel
 
 		usb_enable_autosuspend(udev);
-		pr_info("enable autosuspend, timer <%d>", autosuspend_delay);
+		pr_info("enable autosuspend, timer <%ld>", autosuspend_delay);
 	}
 }
 
@@ -1701,7 +1701,7 @@ static int baseband_xmm_power_driver_probe(struct platform_device *device)
 	int err, ret=0;
 
 	 pr_info(MODULE_NAME"%s 0705 - xmm_wake_pin_miss. \n", __func__);
-	 pr_info(MODULE_NAME"enum_delay_ms=%d\n", enum_delay_ms);
+	 pr_info(MODULE_NAME"enum_delay_ms=%ld\n", enum_delay_ms);
 	 htcpcbid=htc_get_pcbid_info();
 	 pr_info(MODULE_NAME"htcpcbid=%d\n", htcpcbid);
 
@@ -2154,14 +2154,14 @@ static int __init baseband_xmm_power_init(void)
 	/* HTC */
 	host_dbg_flag = 0;
 	int mfg_mode = board_mfg_mode();
-	pr_info("%s - host_dbg_flag<0x%x>, modem_ver<0x%x>, mfg_mode<%d>"
+	pr_info("%s - host_dbg_flag<0x%x>, modem_ver<0x%x>, mfg_mode<%ld>"
 			, __func__, host_dbg_flag, modem_ver, mfg_mode);
 
 	if( mfg_mode )
 	{
 		autosuspend_delay = 365*86400;
 		short_autosuspend_delay = 365*86400;
-		pr_info("In MFG mode, autosuspend_delay <%d>, short_autosuspend_delay <%d>"
+		pr_info("In MFG mode, autosuspend_delay <%ld>, short_autosuspend_delay <%d>"
 				, autosuspend_delay, short_autosuspend_delay );
 	}
 
