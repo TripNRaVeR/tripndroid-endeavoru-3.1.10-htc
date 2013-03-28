@@ -208,7 +208,6 @@ static struct workqueue_struct *workqueue;
 static struct work_struct init1_work;
 static struct work_struct init2_work;
 static struct work_struct L2_resume_work;
-static struct delayed_work init4_work;
 static struct baseband_power_platform_data *baseband_power_driver_data;
 static bool register_hsic_device;
 static struct wake_lock wakelock;
@@ -227,7 +226,6 @@ static int baseband_xmm_power_driver_handle_resume(
 static bool wakeup_pending;
 static int uart_pin_pull_state=1; // 1 for UART, 0 for GPIO
 static bool modem_sleep_flag = false;
-static struct regulator *endeavor_dsi_reg = NULL;//for avdd_csi_dsi
 static spinlock_t xmm_lock;
 static bool system_suspending;
 
@@ -697,7 +695,6 @@ static int baseband_xmm_power_on(struct platform_device *device)
 		= (struct baseband_power_platform_data *)
 			device->dev.platform_data;
 	int ret; /* HTC: ENR#U wakeup src fix */
-	int value;
 
 	pr_debug(MODULE_NAME "%s{\n", __func__);
 
@@ -876,7 +873,6 @@ static int baseband_xmm_power_off(struct platform_device *device)
 #if 1/*HTC*/
 
 	//for power consumation
-	int err=0;
 	pr_debug("%s config_gpio_for_power_off\n", __func__);
 	config_gpio_for_power_off();
 	//err=config_gpio_for_power_off();
@@ -919,7 +915,6 @@ static ssize_t baseband_xmm_onoff(struct device *dev,
 	struct device_attribute *attr,
 	const char *buf, size_t count)
 {
-	int size;
 	struct platform_device *device = to_platform_device(dev);
 
 	mutex_lock(&baseband_xmm_onoff_lock);
@@ -966,7 +961,6 @@ static DEVICE_ATTR(xmm_onoff, S_IRUSR | S_IWUSR | S_IRGRP,
 void baseband_xmm_set_power_status(unsigned int status)
 {
 	struct baseband_power_platform_data *data = baseband_power_driver_data;
-	int value = 0;
 	unsigned long flags;
 
 	if (baseband_xmm_powerstate == status)
@@ -2057,9 +2051,6 @@ static int baseband_xmm_power_driver_handle_resume(
 #ifdef CONFIG_REMOVE_HSIC_L3_STATE
 static int baseband_xmm_power_driver_suspend(struct device *dev)
 {
-	int delay = 10000; /* maxmum delay in msec */
-	struct platform_device *pdev = to_platform_device(dev);
-	struct baseband_power_platform_data *pdata = pdev->dev.platform_data;
 
 	//pr_debug("%s\n", __func__);
 
@@ -2085,10 +2076,6 @@ static int baseband_xmm_power_driver_suspend(struct device *dev)
 
 static int baseband_xmm_power_driver_resume(struct device *dev)
 {
-	struct platform_device *pdev = to_platform_device(dev);
-	struct baseband_power_platform_data *data
-		= (struct baseband_power_platform_data *)
-			pdev->dev.platform_data;
 
 	pr_debug("%s\n", __func__);
 #ifdef CONFIG_REMOVE_HSIC_L3_STATE
