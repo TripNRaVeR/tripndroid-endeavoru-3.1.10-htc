@@ -691,7 +691,7 @@ static void usb_ehset_completion(struct urb *urb)
 
 	complete(done);
 }
-static int submit_single_step_set_feature(
+int submit_single_step_set_feature(
 	struct usb_hcd  *hcd,
 	struct urb      *urb,
 	int 		is_setup
