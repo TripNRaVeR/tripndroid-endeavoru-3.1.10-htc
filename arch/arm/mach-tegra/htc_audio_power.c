@@ -19,7 +19,6 @@ void power_config(const char *name, int pin, int method)
 			AUD_ERR("[PWR] couldn't get regulator %s, pin = %d, addr = %p.\n", name, pin, &audio_regulator);
 			return;
 		}
-
 		ret = regulator_is_enabled(audio_regulator);
 		if (ret > 0) {
 			AUD_DBG("[PWR] regulator %s was enabled, pin = %d.\n", name, pin);
@@ -28,14 +27,11 @@ void power_config(const char *name, int pin, int method)
 			AUD_ERR("[PWR] regulator_is_enable error.\n");
 			return;
 		}
-
 		ret = regulator_enable(audio_regulator);
 		if (ret < 0) {
 			AUD_ERR("[PWR] couldn't enable regulator %s, pin = %d, ret = %d.\n", name, pin, ret);
 			return;
 		}
-
-		AUD_INFO("[PWR] ***** regulator %s %d enable *****\n", name, pin);
 		break;
 	case GPIO_OUTPUT:
 		ret = gpio_direction_output(pin, 1);
@@ -43,11 +39,8 @@ void power_config(const char *name, int pin, int method)
 			AUD_ERR("[PWR] gpio_direction_output gpio %s failed, pin = %d, ret = %d.\n", name, pin, ret);
 			return;
 		}
-
 		tegra_gpio_enable(pin);
 		gpio_set_value(pin, 1);
-
-		AUD_INFO("[PWR] ***** gpio %s %d output enable *****\n", name, pin);
 		break;
 	case GPIO_INPUT:
 		ret = gpio_direction_input(pin);
@@ -55,10 +48,7 @@ void power_config(const char *name, int pin, int method)
 			AUD_ERR("[PWR] gpio_direction_input gpio %s failed, pin = %d, ret = %d.\n", name, pin, ret);
 			return;
 		}
-
 		tegra_gpio_enable(pin);
-
-		AUD_INFO("[PWR] ***** gpio %s %d input enable *****\n", name, pin);
 		break;
 	case INIT_OUTPUT_LOW:
 		ret = gpio_request(pin, name);
@@ -66,7 +56,6 @@ void power_config(const char *name, int pin, int method)
 			AUD_ERR("[PWR] gpio_request gpio %s failed, pin = %d, ret = %d.\n", name, pin, ret);
 			return;
 		}
-
 		ret = gpio_direction_output(pin, 0);
 		if (ret < 0) {
 			AUD_ERR("[PWR] gpio_direction_output gpio %s failed, pin = %d, ret = %d.\n", name, pin, ret);
@@ -79,7 +68,6 @@ void power_config(const char *name, int pin, int method)
 			AUD_ERR("[PWR] gpio_request gpio %s failed, pin = %d, ret = %d.\n", name, pin, ret);
 			return;
 		}
-
 		ret = gpio_direction_output(pin, 1);
 		if (ret < 0) {
 			AUD_ERR("[PWR] gpio_direction_output gpio %s failed, pin = %d, ret = %d.\n", name, pin, ret);
@@ -92,7 +80,6 @@ void power_config(const char *name, int pin, int method)
 			AUD_ERR("[PWR] gpio_request gpio %s failed, pin = %d, ret = %d.\n", name, pin, ret);
 			return;
 		}
-
 		ret = gpio_direction_input(pin);
 		if (ret < 0) {
 			AUD_ERR("[PWR] gpio_direction_input gpio %s failed, pin = %d, ret = %d.\n", name, pin, ret);
@@ -131,12 +118,9 @@ void power_deconfig(const char *name, int pin, int method)
 		if (ret < 0) {
 			AUD_ERR("[PWR] couldn't enable regulator %s %d, ret = %d.\n", name, pin, ret);
 		}
-
-		AUD_INFO("[PWR] ***** regulator %s %d disable *****\n", name, pin);
 		break;
 	case GPIO_OUTPUT:
 		gpio_set_value(pin, 0);
-		AUD_INFO("[PWR] ***** gpio %s %d disable *****\n", name, pin);
 		break;
 	default:
 		AUD_ERR("[PWR] ***** power_deconfig nothing *****\n");
@@ -148,14 +132,12 @@ void power_deconfig(const char *name, int pin, int method)
 void sfio_config(const char *name, int pin)
 {
 	tegra_gpio_disable(pin);
-	AUD_DBG("[PWR] ***** SFIO %s %d enable *****\n", name, pin);
 	return;
 }
 
 void sfio_deconfig(const char *name, int pin)
 {
 	tegra_gpio_enable(pin);
-	AUD_DBG("[PWR] ***** SFIO %s %d disable *****\n", name, pin);
 	return;
 }
 
@@ -170,7 +152,6 @@ void dock_config(const char *name, int pin, bool output, bool out_val)
 			return;
 		}
 		tegra_gpio_enable(pin);
-		AUD_INFO("[PWR] ***** gpio %s %d enable *****\n", name, pin);
 	} else {
 		ret = gpio_direction_input(pin);
 		if (ret < 0) {
@@ -178,7 +159,6 @@ void dock_config(const char *name, int pin, bool output, bool out_val)
 			return;
 		}
 		tegra_gpio_enable(pin);
-		AUD_INFO("[PWR] ***** gpio %s %d disable *****\n", name, pin);
 	}
 	return;
 }
