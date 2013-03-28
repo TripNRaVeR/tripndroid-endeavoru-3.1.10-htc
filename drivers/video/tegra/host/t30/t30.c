@@ -35,6 +35,7 @@
 
 #define NVMODMUTEX_2D_FULL	(1)
 #define NVMODMUTEX_2D_SIMPLE	(2)
+#include "class_ids.h"
 #define NVMODMUTEX_2D_SB_A	(3)
 #define NVMODMUTEX_2D_SB_B	(4)
 #define NVMODMUTEX_3D		(5)
