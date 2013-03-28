@@ -502,7 +502,7 @@ static int gpio_o_l_uart(int gpio, char* name)
 	return ret;
 }
 
-void modem_on_for_uart_config()
+void modem_on_for_uart_config(void)
 {
 
 
@@ -520,7 +520,7 @@ void modem_on_for_uart_config()
 
 }
 
-int modem_off_for_uart_config()
+int modem_off_for_uart_config(void)
 {
 	int err=0;
 
