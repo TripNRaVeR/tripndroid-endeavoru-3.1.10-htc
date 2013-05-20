@@ -299,15 +299,6 @@ void restoreCap(int on)
 }
 EXPORT_SYMBOL(restoreCap);
 
-unsigned int get_powersave_freq(){
-
-    if (is_in_power_save)
-        return powersave_freq;
-
-    return 0;
-}
-EXPORT_SYMBOL(get_powersave_freq);
-
 static struct attribute * g[] = {
 	&media_boost_freq_attr.attr,
 	&cpu_temp_attr.attr,
