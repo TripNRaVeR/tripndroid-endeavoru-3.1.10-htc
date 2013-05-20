@@ -49,7 +49,6 @@ static const char adb_shortname[] = "android_adb";
 
 static struct pm_qos_request_list adb_req_freq;
 static struct pm_qos_request_list adb_req_cpus;
-extern void release_screen_off_freq_lock(unsigned int capfreq );
 extern void lock_screen_off_freq_lock();
 
 static int adb_release_screen_off_flag;
@@ -153,7 +152,6 @@ static void adb_setup_perflock(struct work_struct *data)
 		printk(KERN_INFO "[USB][ADB] %s, perf on\n", __func__);
 		if (adb_release_screen_off_flag) {
 			tegra_udc_set_phy_clk(true);
-			release_screen_off_freq_lock(PM_QOS_CPU_FREQ_MAX_DEFAULT_VALUE);
 			adb_release_screen_off_flag = 0;
 		}
 		pm_qos_update_request(&adb_req_freq, (s32)PM_QOS_CPU_USB_FREQ_MAX_DEFAULT_VALUE);
