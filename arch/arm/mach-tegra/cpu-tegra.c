@@ -37,7 +37,6 @@
 #include <linux/earlysuspend.h>
 #include <linux/spinlock.h>
 #include <linux/workqueue.h>
-#include <linux/cpu_debug.h>
 
 #include <asm/system.h>
 
@@ -533,9 +532,6 @@ int tegra_update_cpu_speed(unsigned long rate)
 				pr_err("[cpufreq] can not nice(-20)!!");
 			}
 
-			CPU_DEBUG_PRINTK(CPU_DEBUG_HOTPLUG,
-					 " leave LPCPU (%s)", __func__);
-
 			/* set rate to max of LP mode */
 			ret = clk_set_rate(cpu_clk, 475000 * 1000);
 
@@ -576,9 +572,6 @@ int tegra_update_cpu_speed(unsigned long rate)
         MF_DEBUG("00UP0043");
 	for_each_online_cpu(freqs.cpu)
 		cpufreq_notify_transition(&freqs, CPUFREQ_PRECHANGE);
-
-	CPU_DEBUG_PRINTK(CPU_DEBUG_FREQ, " transition: %7u --> %7u",
-			 freqs.old, freqs.new);
 
 #ifdef CONFIG_CPU_FREQ_DEBUG
 	printk(KERN_DEBUG "cpufreq-tegra: transition: %u --> %u\n",
@@ -735,11 +728,6 @@ int tegra_input_boost (
 
     target_cpu_speed[cpu] = target_freq;
 
-    CPU_DEBUG_PRINTK(CPU_DEBUG_FREQ,
-                     " cpu%d input_boost_speed: %7u",
-                     cpu,
-                     target_freq);
-
     /* will auto. round-rate */
     ret = tegra_update_cpu_speed(target_freq);
 _no_boost:
@@ -769,8 +757,6 @@ static int tegra_target(struct cpufreq_policy *policy,
 
 	target_cpu_speed[policy->cpu] = freq;
 
-	CPU_DEBUG_PRINTK(CPU_DEBUG_FREQ, " cpu%d target_speed: %7u",
-			 policy->cpu, freq);
 	ret = tegra_cpu_set_speed_cap(&new_speed);
 _out:
 	mutex_unlock(&tegra_cpu_lock);
