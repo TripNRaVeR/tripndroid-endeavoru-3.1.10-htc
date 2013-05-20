@@ -49,7 +49,6 @@ static const char adb_shortname[] = "android_adb";
 
 static struct pm_qos_request_list adb_req_freq;
 static struct pm_qos_request_list adb_req_cpus;
-extern void lock_screen_off_freq_lock();
 
 static int adb_release_screen_off_flag;
 static struct work_struct adb_perf_lock_on_work;
@@ -162,7 +161,6 @@ static void adb_setup_perflock(struct work_struct *data)
 		pm_qos_update_request(&adb_req_freq, (s32)PM_QOS_CPU_FREQ_MIN_DEFAULT_VALUE);
 		pm_qos_update_request(&adb_req_cpus, (s32)PM_QOS_MIN_ONLINE_CPUS_DEFAULT_VALUE);
 		if (!adb_release_screen_off_flag) {
-			lock_screen_off_freq_lock();
 			adb_release_screen_off_flag = 1;
 			tegra_udc_set_phy_clk(false);
 		}
