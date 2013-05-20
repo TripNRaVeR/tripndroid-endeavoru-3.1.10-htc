@@ -26,6 +26,7 @@ ifneq ($(CONFIG_VIDEO_TEGRA),y)
 obj-$(CONFIG_TEGRA_GRHOST) += vi/
 endif
 obj-$(CONFIG_TEGRA_GRHOST) += nvhost.o
+obj-$(CONFIG_TEGRA_GRHOST) += msenc/
 
 obj-$(CONFIG_TEGRA_GRHOST_USE_NVMAP) += nvmap.o
 obj-$(CONFIG_TEGRA_GRHOST_USE_DMABUF) += dmabuf.o
