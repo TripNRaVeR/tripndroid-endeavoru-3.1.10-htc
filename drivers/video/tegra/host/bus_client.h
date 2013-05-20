@@ -40,4 +40,7 @@ int nvhost_client_device_get_resources(struct nvhost_device *dev);
 
 void nvhost_client_device_put_resources(struct nvhost_device *dev);
 
+const struct firmware *
+nvhost_client_request_firmware(struct nvhost_device *dev, const char *fw_name);
+
 #endif
