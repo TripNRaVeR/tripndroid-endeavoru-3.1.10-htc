@@ -4158,6 +4158,9 @@ static struct tegra_dc_platform_data endeavor_disp1_pdata = {
 	.default_out	= &endeavor_disp1_out,
 	.emc_clk_rate	= 204000000,
 	.fb		= &endeavor_dsi_fb_data,
+#ifdef CONFIG_TEGRA_DC_CMU
+	.cmu_enable	= 1,
+#endif
 };
 
 static struct nvhost_device endeavor_disp1_device = {
