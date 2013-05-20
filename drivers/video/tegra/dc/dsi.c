@@ -2305,7 +2305,7 @@ static int tegra_dsi_send_panel_cmd(struct tegra_dc *dc,
 				break;
 		}
 		/*Add delay to prevent driver IC cannot recive command*/
-		udelay(100);
+		udelay(5);
 	}
 	return err;
 }
