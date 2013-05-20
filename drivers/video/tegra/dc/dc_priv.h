@@ -92,6 +92,11 @@ struct tegra_dc_out_ops {
 	void (*send_cmd)(struct tegra_dc *dc, struct tegra_dsi_cmd *cmd, int n);
 };
 
+struct tegra_dc_shift_clk_div {
+	unsigned long mul; /* numerator */
+	unsigned long div; /* denominator */
+};
+
 struct tegra_dc {
 	struct nvhost_device		*ndev;
 	struct tegra_dc_platform_data	*pdata;
@@ -104,7 +109,7 @@ struct tegra_dc {
 	struct clk			*emc_clk;
 	int				emc_clk_rate;
 	int				new_emc_clk_rate;
-	u32				shift_clk_div;
+	struct tegra_dc_shift_clk_div	shift_clk_div;
 
 	bool				connected;
 	bool				enabled;
