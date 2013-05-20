@@ -141,8 +141,9 @@ static void to_state_running_locked(struct nvhost_device *dev)
 			}
 		}
 
-		if (prev_state == NVHOST_POWER_STATE_POWERGATED
-				&& drv->finalize_poweron)
+               /* Invoke callback. This is used for re-enabling host1x
+                * interrupts. */
+               if (drv->finalize_poweron)
 			drv->finalize_poweron(dev);
 	}
 	dev->powerstate = NVHOST_POWER_STATE_RUNNING;
