@@ -919,18 +919,6 @@ static struct cpufreq_driver tegra_cpufreq_driver = {
 	.attr		= tegra_cpufreq_attr,
 };
 
-void release_screen_off_freq_lock(unsigned int capfreq )
-{
-    if (enter_early_suspend){
-//        perf_early_suspend = 1 ;
-        CAP_CPU_FREQ_TARGET = capfreq;
-        pm_qos_update_request(&cap_cpu_freq_req,
-          (s32)capfreq);
-        pr_info("Release early suspend CPU cap to %u\n",capfreq);
-    }
-}
-EXPORT_SYMBOL_GPL(release_screen_off_freq_lock);
-
 void lock_screen_off_freq_lock()
 {
     if (enter_early_suspend){
