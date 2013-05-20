@@ -90,7 +90,6 @@
 #include <mach/tegra_flashlight.h>
 
 #include <linux/skbuff.h>
-#include <linux/ti_wilink_st.h>
 #include <linux/wakelock.h>
 /* TI 128x Bluetooth begin */
 #include <linux/ti_wilink_st.h>
