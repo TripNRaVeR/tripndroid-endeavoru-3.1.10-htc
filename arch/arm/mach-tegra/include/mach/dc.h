@@ -91,6 +91,16 @@ struct tegra_dsi_cmd {
 	u8	*pdata;
 };
 
+#define DSI_GENERIC_LONG_WRITE			0x29
+#define DSI_GENERIC_SHORT_WRITE_1_PARAMS	0x13
+#define DSI_GENERIC_SHORT_WRITE_2_PARAMS	0x23
+#define DSI_DCS_WRITE_0_PARAM			0x05
+#define DSI_DCS_WRITE_1_PARAM			0x15
+
+#define DSI_DCS_SET_TEARING_EFFECT_OFF		0x34
+#define DSI_DCS_SET_TEARING_EFFECT_ON		0x35
+#define DSI_DCS_NO_OP				0x0
+
 #define DSI_CMD_SHORT(di, p0, p1)	{ \
 					.cmd_type = TEGRA_DSI_PACKET_CMD, \
 					.data_id = di, \
