@@ -307,7 +307,6 @@ obj-${CONFIG_HTC_PROJECT}               += htc_wifi_nvs.o
 obj-${CONFIG_HTC_PROJECT}               += nvdumper.o
 obj-${CONFIG_HTC_BATT_CORE}             += htc_battery_core.o
 obj-$(CONFIG_BATTERY_TPS80032)          += htc_battery_tps80032.o
-obj-y					+= htc_perf.o
 obj-${CONFIG_MEMORY_FOOTPRINT_DEBUGGING}+= mfootprint.o
 
 # sophia: add mdm driver
