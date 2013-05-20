@@ -3103,7 +3103,7 @@ static void _tegra_dc_dsi_init(struct tegra_dc *dc)
 static int tegra_dc_dsi_cp_p_cmd(struct tegra_dsi_cmd *src,
 					struct tegra_dsi_cmd *dst, u16 n_cmd)
 {
-	u16 i,j;
+	u16 i;
 	u16 len;
 
 	memcpy(dst, src, sizeof(*dst) * n_cmd);
@@ -3121,9 +3121,9 @@ static int tegra_dc_dsi_cp_p_cmd(struct tegra_dsi_cmd *src,
 	return 0;
 
 free_cmd_pdata:
-	for (j=0; j < i; j++)
-		if (dst[j].pdata)
-			kfree(dst[j].pdata);
+	while (i--)
+		if (dst[i].pdata)
+			kfree(dst[i].pdata);
 	return -ENOMEM;
 }
 
