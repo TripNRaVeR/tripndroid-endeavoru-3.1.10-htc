@@ -54,8 +54,10 @@ static irqreturn_t syncpt_thresh_cascade_isr(int irq, void *dev_id)
 		for_each_set_bit(id, &reg, BITS_PER_LONG) {
 			struct nvhost_intr_syncpt *sp =
 				intr->syncpt + (i * BITS_PER_LONG + id);
-			t20_intr_syncpt_thresh_isr(sp);
-			queue_work(intr->wq, &sp->work);
+			if (sp->irq_requested) {
+				t20_intr_syncpt_thresh_isr(sp);
+				queue_work(intr->wq, &sp->work);
+			}
 		}
 	}
 
@@ -206,6 +208,9 @@ static int t20_intr_request_host_general_irq(struct nvhost_intr *intr)
 	void __iomem *sync_regs = intr_to_dev(intr)->sync_aperture;
 	int err;
 
+	if (intr->host_general_irq_requested)
+		return 0;
+
 	/* master disable for general (not syncpt) host interrupts */
 	writel(0, sync_regs + host1x_sync_intmask_r());
 
@@ -230,17 +235,28 @@ static int t20_intr_request_host_general_irq(struct nvhost_intr *intr)
 	/* master enable for general (not syncpt) host interrupts */
 	writel(BIT(0), sync_regs + host1x_sync_intmask_r());
 
+	intr->host_general_irq_requested = true;
+
 	return err;
 }
 
 static void t20_intr_free_host_general_irq(struct nvhost_intr *intr)
 {
-	void __iomem *sync_regs = intr_to_dev(intr)->sync_aperture;
+	if (intr->host_general_irq_requested) {
+		void __iomem *sync_regs = intr_to_dev(intr)->sync_aperture;
 
-	/* master disable for general (not syncpt) host interrupts */
-	writel(0, sync_regs + host1x_sync_intmask_r());
+		/* master disable for general (not syncpt) host interrupts */
+		writel(0, sync_regs + host1x_sync_intmask_r());
 
-	free_irq(intr->host_general_irq, intr);
+		free_irq(intr->host_general_irq, intr);
+		intr->host_general_irq_requested = false;
+	}
+}
+
+static int t20_request_syncpt_irq(struct nvhost_intr_syncpt *syncpt)
+{
+	syncpt->irq_requested = 1;
+	return 0;
 }
 
 static int t20_free_syncpt_irq(struct nvhost_intr *intr)
@@ -260,5 +276,6 @@ static const struct nvhost_intr_ops host1x_intr_ops = {
 	.disable_all_syncpt_intrs = t20_intr_disable_all_syncpt_intrs,
 	.request_host_general_irq = t20_intr_request_host_general_irq,
 	.free_host_general_irq = t20_intr_free_host_general_irq,
+	.request_syncpt_irq = t20_request_syncpt_irq,
 	.free_syncpt_irq = t20_free_syncpt_irq,
 };

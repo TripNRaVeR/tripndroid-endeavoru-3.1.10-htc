@@ -241,6 +241,15 @@ irqreturn_t nvhost_syncpt_thresh_fn(int irq, void *dev_id)
 	return IRQ_HANDLED;
 }
 
+/**
+ * free a syncpt's irq. syncpt interrupt should be disabled first.
+ */
+static void free_syncpt_irq(struct nvhost_intr_syncpt *syncpt)
+{
+	syncpt->irq_requested = 0;
+}
+
+
 /*** host general interrupt service functions ***/
 
 
@@ -254,6 +263,7 @@ int nvhost_intr_add_action(struct nvhost_intr *intr, u32 id, u32 thresh,
 	struct nvhost_waitlist *waiter = _waiter;
 	struct nvhost_intr_syncpt *syncpt;
 	int queue_was_empty;
+	int err;
 
 	BUG_ON(waiter == NULL);
 
@@ -274,6 +284,23 @@ int nvhost_intr_add_action(struct nvhost_intr *intr, u32 id, u32 thresh,
 	syncpt = intr->syncpt + id;
 
 	spin_lock(&syncpt->lock);
+
+	/* lazily request irq for this sync point */
+	if (!syncpt->irq_requested) {
+		spin_unlock(&syncpt->lock);
+
+		mutex_lock(&intr->mutex);
+		BUG_ON(!(intr_op().request_syncpt_irq));
+		err = intr_op().request_syncpt_irq(syncpt);
+		mutex_unlock(&intr->mutex);
+
+		if (err) {
+			kfree(waiter);
+			return err;
+		}
+
+		spin_lock(&syncpt->lock);
+	}
 
 	queue_was_empty = list_empty(&syncpt->wait_head);
 
@@ -331,6 +358,7 @@ int nvhost_intr_init(struct nvhost_intr *intr, u32 irq_gen, u32 irq_sync)
 	intr->wq = create_workqueue("host_syncpt");
 	intr_op().init_host_sync(intr);
 	intr->host_general_irq = irq_gen;
+	intr->host_general_irq_requested = false;
 	intr_op().request_host_general_irq(intr);
 
 	for (id = 0, syncpt = intr->syncpt;
@@ -339,6 +367,7 @@ int nvhost_intr_init(struct nvhost_intr *intr, u32 irq_gen, u32 irq_sync)
 		syncpt->intr = &host->intr;
 		syncpt->id = id;
 		syncpt->irq = irq_sync + id;
+		syncpt->irq_requested = 0;
 		spin_lock_init(&syncpt->lock);
 		INIT_LIST_HEAD(&syncpt->wait_head);
 		snprintf(syncpt->thresh_irq_name,
@@ -379,8 +408,7 @@ void nvhost_intr_stop(struct nvhost_intr *intr)
 	u32 nb_pts = nvhost_syncpt_nb_pts(&intr_to_dev(intr)->syncpt);
 
 	BUG_ON(!(intr_op().disable_all_syncpt_intrs &&
-		 intr_op().free_host_general_irq &&
-		 intr_op().free_syncpt_irq));
+		 intr_op().free_host_general_irq));
 
 	mutex_lock(&intr->mutex);
 
@@ -402,6 +430,8 @@ void nvhost_intr_stop(struct nvhost_intr *intr)
 			printk(KERN_DEBUG "%s id=%d\n", __func__, id);
 			BUG_ON(1);
 		}
+
+		free_syncpt_irq(syncpt);
 	}
 
 	intr_op().free_host_general_irq(intr);
