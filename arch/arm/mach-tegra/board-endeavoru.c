@@ -86,7 +86,6 @@
 #include "fuse.h"
 #include "pm.h"
 #include "touch.h"
-#include "htc_perf.h"
 #include "wakeups-t3.h"
 #include <mach/tegra_flashlight.h>
 
