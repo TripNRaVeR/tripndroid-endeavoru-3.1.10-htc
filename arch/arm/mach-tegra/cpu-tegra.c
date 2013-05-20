@@ -50,7 +50,6 @@
 #include "dvfs.h"
 #include "pm.h"
 
-extern unsigned int get_powersave_freq();
 /* Symbol to store resume resume */
 extern unsigned long long wake_reason_resume;
 
@@ -167,17 +166,7 @@ static unsigned int user_cap_speed(unsigned int requested_speed)
 	return requested_speed;
 }
 
-#if 1
-static unsigned int powersave_speed(unsigned int requested_speed)
-{
-	if ((get_powersave_freq()) && (requested_speed > get_powersave_freq()))
-		return get_powersave_freq();
-	return requested_speed;
-}
-
-#else
 #define powersave_speed(requested_speed) (requested_speed)
-#endif
 
 #ifdef CONFIG_TEGRA_THERMAL_THROTTLE
 
