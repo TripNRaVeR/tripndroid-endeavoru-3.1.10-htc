@@ -42,6 +42,12 @@ config TEGRA_DC_SCAN_COLUMN
 	help
 	  backported from Tegra4 (tripndroid)
 
+config TEGRA_DC_CMU
+	bool "Tegra CMU support"
+	default n
+	help
+	  backported from Tegra4 (tripndroid)
+
 config FB_TEGRA
 	tristate "Tegra Framebuffer driver"
 	depends on TEGRA_DC && FB = y
