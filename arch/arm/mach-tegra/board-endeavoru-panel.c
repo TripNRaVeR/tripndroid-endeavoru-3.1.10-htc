@@ -4060,7 +4060,8 @@ static struct tegra_dsi_cmd dsi_suspend_cmd[] = {
 struct tegra_dsi_out endeavor_dsi = {
 	.n_data_lanes = 2,
 	.pixel_format = TEGRA_DSI_PIXEL_FORMAT_24BIT_P,
-	.refresh_rate = 66,
+	.rated_refresh_rate = 60,
+	.refresh_rate = 60,
 
 	.virtual_channel = TEGRA_DSI_VIRTUAL_CHANNEL_0,
 
