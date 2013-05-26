@@ -127,6 +127,8 @@ struct synaptics_ts_data {
 	struct synaptics_virtual_key *button;
 };
 
+extern unsigned int tdf_ts_fix;
+
 #ifdef CONFIG_HAS_EARLYSUSPEND
 static void synaptics_ts_early_suspend(struct early_suspend *h);
 static void synaptics_ts_late_resume(struct early_suspend *h);
@@ -1974,17 +1976,19 @@ static void synaptics_ts_finger_func(struct synaptics_ts_data *ts)
 					}
 					if (ts->packrat_number < SYNAPTICS_FW_NOCAL_PACKRAT) {
 #ifdef SYN_CALIBRATION_CONTROL
-						if (ts->multitouch_calibration) {
-							if ((finger_release_changed & BIT(i)) && ts->pre_finger_data[0][0] == 1) {
-								if (ts->package_id < 3400) {
-									ret = i2c_syn_write_byte_data(ts->client,
-										get_address_base(ts, ts->finger_func_idx, COMMAND_BASE), 0x01);
-									if (ret < 0)
-										i2c_syn_error_handler(ts, ts->i2c_err_handler_en, "w:Rezero_2", __func__);
-									printk(KERN_INFO "[TP] %s: Touch Calibration Confirmed, rezero\n", __func__);
-								}
+				if (tdf_ts_fix == 0) {
+					if (ts->multitouch_calibration) {
+						if ((finger_release_changed & BIT(i)) && ts->pre_finger_data[0][0] == 1) {
+							if (ts->package_id < 3400) {
+								ret = i2c_syn_write_byte_data(ts->client,
+									get_address_base(ts, ts->finger_func_idx, COMMAND_BASE), 0x01);
+								if (ret < 0)
+									i2c_syn_error_handler(ts, ts->i2c_err_handler_en, "w:Rezero_2", __func__);
+								printk(KERN_INFO "[TP] %s: Touch Calibration Confirmed, rezero\n", __func__);
 							}
 						}
+					}
+				}
 #endif
 					}
 					if (!ts->finger_count)
