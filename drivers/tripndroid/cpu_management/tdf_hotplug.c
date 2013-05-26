@@ -288,7 +288,7 @@ static void tripndroid_hp_wt(struct work_struct *work)
 
 out:
 	if (state != TRIPNDROID_HP_DISABLED) {
-		schedule_delayed_work_on(0, &tripndroid_hp_w, msecs_to_jiffies(200));
+		schedule_delayed_work_on(0, &tripndroid_hp_w, msecs_to_jiffies(100));
         }
 
 	return;
