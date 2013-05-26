@@ -691,18 +691,6 @@ static u8 cabc[] = {0xCA,0x2D,0x27,0x26,0x25,0x25,0x25,0x21,0x20,0x20};
 static u8 pwm_setting[] = {0xC9,0x1F,0x01,0x1E,0x3F,0x00,0x80};
 static u8 data_gain[] = {0xCE,0x15,0x15,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x00};
 
-static struct tegra_dsi_cmd osc_off_cmd[]= {
-	DSI_DLY_MS(2),
-	DSI_CMD_SHORT(0x15, 0xFF, 0xEE),
-	DSI_CMD_SHORT(0x15, 0x26, 0x08),
-	DSI_DLY_MS(1),
-};
-
-static struct tegra_dsi_cmd osc_on_cmd[]= {
-	DSI_CMD_SHORT(0x15, 0x26, 0x00),
-	DSI_CMD_SHORT(0x15, 0xFF, 0x00),
-};
-
 static struct tegra_dsi_cmd dsi_init_sharp_hx_c3_cmd[]= {
 	DSI_CMD_SHORT(0x05, 0x11, 0x00),
 	DSI_DLY_MS(105),
@@ -4481,11 +4469,6 @@ int __init endeavor_panel_init(void)
 		case PANEL_ID_SONY_NT_C1:
 			endeavor_dsi.n_init_cmd = ARRAY_SIZE(dsi_init_sony_nt_c1_cmd);
 			endeavor_dsi.dsi_init_cmd = dsi_init_sony_nt_c1_cmd;
-
-			endeavor_dsi.n_osc_off_cmd = ARRAY_SIZE(osc_off_cmd);
-			endeavor_dsi.osc_off_cmd = osc_off_cmd;
-			endeavor_dsi.n_osc_on_cmd = ARRAY_SIZE(osc_on_cmd);
-			endeavor_dsi.osc_on_cmd = osc_on_cmd;
 			endeavor_dsi.n_cabc_cmd = ARRAY_SIZE(nt_moving_mode_cmd);
 			endeavor_dsi.dsi_cabc_moving_mode = nt_moving_mode_cmd;
 			endeavor_dsi.dsi_cabc_still_mode = nt_still_mode_cmd;
@@ -4494,11 +4477,6 @@ int __init endeavor_panel_init(void)
 		case PANEL_ID_SONY:
 			endeavor_dsi.n_init_cmd = ARRAY_SIZE(dsi_init_sony_nt_c2_cmd);
 			endeavor_dsi.dsi_init_cmd = dsi_init_sony_nt_c2_cmd;
-
-			endeavor_dsi.n_osc_off_cmd = ARRAY_SIZE(osc_off_cmd);
-			endeavor_dsi.osc_off_cmd = osc_off_cmd;
-			endeavor_dsi.n_osc_on_cmd = ARRAY_SIZE(osc_on_cmd);
-			endeavor_dsi.osc_on_cmd = osc_on_cmd;
 			endeavor_dsi.n_cabc_cmd = ARRAY_SIZE(nt_moving_mode_cmd);
 			endeavor_dsi.dsi_cabc_moving_mode = nt_moving_mode_cmd;
 			endeavor_dsi.dsi_cabc_still_mode = nt_still_mode_cmd;
@@ -4508,11 +4486,6 @@ int __init endeavor_panel_init(void)
 			endeavor_dsi.dsi_init_cmd = dsi_init_sharp_nt_c1_cmd;
 			endeavor_dsi.refresh_rate = 60;
 			endeavor_dsi_modes[0].h_front_porch = 29;
-
-			endeavor_dsi.n_osc_off_cmd = ARRAY_SIZE(osc_off_cmd);
-			endeavor_dsi.osc_off_cmd = osc_off_cmd;
-			endeavor_dsi.n_osc_on_cmd = ARRAY_SIZE(osc_on_cmd);
-			endeavor_dsi.osc_on_cmd = osc_on_cmd;
 			endeavor_dsi.n_cabc_cmd = ARRAY_SIZE(nt_moving_mode_cmd);
 			endeavor_dsi.dsi_cabc_moving_mode = nt_moving_mode_cmd;
 			endeavor_dsi.dsi_cabc_still_mode = nt_still_mode_cmd;
@@ -4520,11 +4493,6 @@ int __init endeavor_panel_init(void)
 		case PANEL_ID_SHARP_NT_C2:
 			endeavor_dsi.n_init_cmd = ARRAY_SIZE(dsi_init_sharp_nt_c2_cmd);
 			endeavor_dsi.dsi_init_cmd = dsi_init_sharp_nt_c2_cmd;
-
-			endeavor_dsi.n_osc_off_cmd = ARRAY_SIZE(osc_off_cmd);
-			endeavor_dsi.osc_off_cmd = osc_off_cmd;
-			endeavor_dsi.n_osc_on_cmd = ARRAY_SIZE(osc_on_cmd);
-			endeavor_dsi.osc_on_cmd = osc_on_cmd;
 			endeavor_dsi.n_cabc_cmd = ARRAY_SIZE(nt_moving_mode_cmd);
 			endeavor_dsi.dsi_cabc_moving_mode = nt_moving_mode_cmd;
 			endeavor_dsi.dsi_cabc_still_mode = nt_still_mode_cmd;
@@ -4532,11 +4500,6 @@ int __init endeavor_panel_init(void)
 		case PANEL_ID_SHARP_NT_C2_9A:
 			endeavor_dsi.n_init_cmd = ARRAY_SIZE(dsi_init_sharp_nt_c2_9a_cmd);
 			endeavor_dsi.dsi_init_cmd = dsi_init_sharp_nt_c2_9a_cmd;
-
-			endeavor_dsi.n_osc_off_cmd = ARRAY_SIZE(osc_off_cmd);
-			endeavor_dsi.osc_off_cmd = osc_off_cmd;
-			endeavor_dsi.n_osc_on_cmd = ARRAY_SIZE(osc_on_cmd);
-			endeavor_dsi.osc_on_cmd = osc_on_cmd;
 			endeavor_dsi.n_cabc_cmd = ARRAY_SIZE(nt_moving_mode_cmd);
 			endeavor_dsi.dsi_cabc_moving_mode = nt_moving_mode_cmd;
 			endeavor_dsi.dsi_cabc_still_mode = nt_still_mode_cmd;
@@ -4548,30 +4511,15 @@ int __init endeavor_panel_init(void)
 		case PANEL_ID_AUO_NT_C2:
 			endeavor_dsi.n_init_cmd = ARRAY_SIZE(dsi_init_auo_nt_c2_cmd);
 			endeavor_dsi.dsi_init_cmd = dsi_init_auo_nt_c2_cmd;
-
-			endeavor_dsi.n_osc_off_cmd = ARRAY_SIZE(osc_off_cmd);
-			endeavor_dsi.osc_off_cmd = osc_off_cmd;
-			endeavor_dsi.n_osc_on_cmd = ARRAY_SIZE(osc_on_cmd);
-			endeavor_dsi.osc_on_cmd = osc_on_cmd;
 		break;
 		case PANEL_ID_AUO_NT_X7:
 		case PANEL_ID_AUO:
 			endeavor_dsi.n_init_cmd = ARRAY_SIZE(dsi_init_auo_nt_x7_cmd);
 			endeavor_dsi.dsi_init_cmd = dsi_init_auo_nt_x7_cmd;
-
-			endeavor_dsi.n_osc_off_cmd = ARRAY_SIZE(osc_off_cmd);
-			endeavor_dsi.osc_off_cmd = osc_off_cmd;
-			endeavor_dsi.n_osc_on_cmd = ARRAY_SIZE(osc_on_cmd);
-			endeavor_dsi.osc_on_cmd = osc_on_cmd;
 		break;
 		default:
 			endeavor_dsi.n_init_cmd = ARRAY_SIZE(dsi_init_sharp_nt_c2_9a_cmd);
 			endeavor_dsi.dsi_init_cmd = dsi_init_sharp_nt_c2_9a_cmd;
-
-			endeavor_dsi.n_osc_off_cmd = ARRAY_SIZE(osc_off_cmd);
-			endeavor_dsi.osc_off_cmd = osc_off_cmd;
-			endeavor_dsi.n_osc_on_cmd = ARRAY_SIZE(osc_on_cmd);
-			endeavor_dsi.osc_on_cmd = osc_on_cmd;
 	}
 
 #if defined(CONFIG_TEGRA_GRHOST) && defined(CONFIG_TEGRA_DC)
