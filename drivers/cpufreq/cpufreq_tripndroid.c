@@ -82,6 +82,8 @@ static unsigned long min_sample_time;
 #define DEFAULT_TIMER_RATE 20 * USEC_PER_MSEC
 static unsigned long timer_rate;
 
+static unsigned long boost_factor = 2;
+
 static int cpufreq_governor_tripndroid(struct cpufreq_policy *policy, unsigned int event);
 
 #ifndef CONFIG_CPU_FREQ_DEFAULT_GOV_TRIPNDROID
@@ -163,13 +165,17 @@ static void cpufreq_tripndroid_timer(unsigned long data)
 	}
 
 	if (cpu_load >= go_hispeed_load) {
+
 		if (pcpu->policy->cur == pcpu->policy->min) {
 			new_freq = hispeed_freq;
 		}
 		else {
-			new_freq = pcpu->policy->max * cpu_load / 100;
-				if (new_freq < hispeed_freq)
-					new_freq = hispeed_freq;
+
+			if (!boost_factor)
+				new_freq = pcpu->policy->max;
+
+			new_freq = pcpu->policy->cur * boost_factor;
+
 		}
 	}
 	else {
