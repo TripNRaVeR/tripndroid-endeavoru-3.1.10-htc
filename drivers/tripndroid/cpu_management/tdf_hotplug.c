@@ -75,7 +75,7 @@ static unsigned int nr_run_last;
 
 static unsigned int normal_thresholds[] = {
 /* 	1,  2,  3,  4 - on-line cpus target */
-	4,  8,  9, UINT_MAX
+	7,  9,  10, UINT_MAX
 };
 
 static unsigned int powersaving_thresholds[] = {
