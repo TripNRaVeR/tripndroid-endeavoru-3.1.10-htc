@@ -28,7 +28,7 @@ unsigned int tdf_cpu_load = 0;
 /* make available to userspace */
 unsigned int powersaving_active = 0;
 unsigned int tdf_fast_charge = 0;
-
+unsigned int tdf_ts_fix = 1;
 
 /* create sysfs structure start */
 struct kobject *tdf_kobject;
@@ -41,6 +41,7 @@ static ssize_t show_##file_name						\
 }
 show_one(powersave_active, powersaving_active);
 show_one(fast_charge, tdf_fast_charge);
+show_one(ts_fix, tdf_ts_fix);
 
 static ssize_t store_powersave_active(struct kobject *a, struct attribute *b,
 				   const char *buf, size_t count)
@@ -72,9 +73,25 @@ static ssize_t store_fast_charge(struct kobject *a, struct attribute *b,
 }
 define_one_global_rw(fast_charge);
 
+static ssize_t store_ts_fix(struct kobject *a, struct attribute *b,
+				   const char *buf, size_t count)
+{
+	unsigned int value;
+	int ret;
+	ret = sscanf(buf, "%u", &value);
+	if (ret != 1)
+		return -EINVAL;
+
+	tdf_ts_fix = value;
+
+	return count;
+}
+define_one_global_rw(ts_fix);
+
 static struct attribute *tdf_attributes[] = {
 	&powersave_active.attr,
 	&fast_charge.attr,
+	&ts_fix.attr,
 	NULL
 };
 
