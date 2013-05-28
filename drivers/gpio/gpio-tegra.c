@@ -23,7 +23,7 @@
 #include <linux/irq.h>
 #include <linux/interrupt.h>
 #include <linux/delay.h>
-
+#include <linux/export.h>
 #include <linux/io.h>
 #include <linux/gpio.h>
 #include <linux/of.h>
