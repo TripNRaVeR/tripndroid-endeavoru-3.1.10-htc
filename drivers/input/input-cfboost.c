@@ -24,7 +24,7 @@
 #include <linux/workqueue.h>
 #include <linux/input.h>
 #include <linux/module.h>
-#include <linux/pm_qos.h>
+#include <linux/pm_qos_params.h>
 
 /* This module listens to input events and sets a temporary frequency
  * floor upon input event detection. This is based on changes to
