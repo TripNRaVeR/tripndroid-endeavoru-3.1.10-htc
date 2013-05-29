@@ -4100,7 +4100,7 @@ static struct tegra_stereo_out endeavor_stereo = {
 #ifdef CONFIG_TEGRA_DC
 static struct tegra_dc_mode endeavor_dsi_modes[] = {
 	{
-		.pclk = 20000000,
+		.pclk = 10000000,
 		.h_ref_to_sync = 4,
 		.v_ref_to_sync = 1,
 		.h_sync_width = 16,
