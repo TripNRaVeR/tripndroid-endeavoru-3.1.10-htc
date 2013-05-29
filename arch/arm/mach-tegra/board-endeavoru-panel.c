@@ -455,8 +455,6 @@ static int bridge_reset(void)
 {
 	int err = 0;
 
-	DISP_INFO_IN();
-
 	if (is_power_on) {
 		DISP_INFO_LN("is_power_on:%d\n", is_power_on);
 		return 0;
@@ -520,7 +518,6 @@ failed:
 success:
 	is_power_on = 1;
 	DISP_INFO_LN("is_power_on:%d\n", is_power_on);
-	DISP_INFO_OUT();
 
 	return err;
 }
@@ -557,7 +554,6 @@ static int endeavor_dsi_panel_disable(void)
 		return 0;
 	}
 
-	DISP_INFO_IN();
 	gpio_set_value(LCM_RST, 0);
 	hr_msleep(12);
 
@@ -4229,7 +4225,6 @@ static void bkl_do_work(struct work_struct *work)
 {
 	struct backlight_device *bl = platform_get_drvdata(&endeavor_disp1_backlight_device);
 	if (bl) {
-		DISP_DEBUG_LN("set backlight after resume");
 		bl->props.bkl_on = 1;
 		backlight_update_status(bl);
 	}
@@ -4253,8 +4248,6 @@ static void endeavor_panel_early_suspend(struct early_suspend *h)
 {
 	struct backlight_device *bl = platform_get_drvdata(&endeavor_disp1_backlight_device);
 
-	DISP_INFO_IN();
-
 	if (bl && bl->props.bkl_on) {
 		bl->props.bkl_on = 0;
 		del_timer_sync(&bkl_timer);
@@ -4266,29 +4259,22 @@ static void endeavor_panel_early_suspend(struct early_suspend *h)
 		fb_blank(registered_fb[0], FB_BLANK_POWERDOWN);
 	if (num_registered_fb > 1)
 		fb_blank(registered_fb[1], FB_BLANK_NORMAL);
-
-	DISP_INFO_OUT();
 }
 
 static void endeavor_panel_late_resume(struct early_suspend *h)
 {
 	unsigned i;
 
-	DISP_INFO_IN();
-
 	for (i = 0; i < num_registered_fb; i++)
 		fb_blank(registered_fb[i], FB_BLANK_UNBLANK);
 
 	mod_timer(&bkl_timer, jiffies + msecs_to_jiffies(50));
-	DISP_INFO_OUT();
 }
 
 #ifdef CONFIG_HTC_ONMODE_CHARGING
 static void endeavor_panel_onchg_suspend(struct early_suspend *h)
 {
 	struct backlight_device *bl = platform_get_drvdata(&endeavor_disp1_backlight_device);
-
-	DISP_INFO_IN();
 
 	if (bl && bl->props.bkl_on) {
 		bl->props.bkl_on = 0;
@@ -4300,19 +4286,16 @@ static void endeavor_panel_onchg_suspend(struct early_suspend *h)
 	if (num_registered_fb > 0)
 		fb_blank(registered_fb[0], FB_BLANK_POWERDOWN);
 
-	DISP_INFO_OUT();
 }
 
 static void endeavor_panel_onchg_resume(struct early_suspend *h)
 {
 	unsigned i;
 
-	DISP_INFO_IN();
-
 	fb_blank(registered_fb[0], FB_BLANK_UNBLANK);
 
 	mod_timer(&bkl_timer, jiffies + msecs_to_jiffies(50));
-	DISP_INFO_OUT();
+
 }
 #endif /* onmode charge */
 #endif /* early suspend */
