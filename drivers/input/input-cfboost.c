@@ -48,7 +48,7 @@ MODULE_DESCRIPTION("Input event CPU frequency booster");
 MODULE_LICENSE("GPL v2");
 
 
-static struct pm_qos_request freq_req, core_req;
+static struct pm_qos_request_list freq_req, core_req;
 static struct work_struct boost;
 static struct delayed_work unboost;
 static unsigned int boost_freq; /* kHz */
