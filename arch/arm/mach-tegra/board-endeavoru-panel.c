@@ -541,7 +541,7 @@ static int ic_reset(void)
 	gpio_set_value(LCM_RST, 0);
 	hr_msleep(1);
 	gpio_set_value(LCM_RST, 1);
-	hr_msleep(25);
+	hr_msleep(10);
 
 success:
 	DISP_INFO_OUT();
