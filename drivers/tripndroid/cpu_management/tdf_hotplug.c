@@ -194,7 +194,7 @@ static int mp_decision(void)
 	if (online_cpus) {
 		index = (online_cpus - 1) * 2;
 		if ((online_cpus < tripndroid_hp_config.max_cpus) && (current_run >= NwNs_Threshold[index])) {
-			if (total_time >= TwTs_Threshold[index]) {
+			if ((total_time >= TwTs_Threshold[index]) && (online_cpus < req_cpus)) {
 				if (online_cpus < req_cpus)
 					next_state = TRIPNDROID_HP_UP;
 			}
