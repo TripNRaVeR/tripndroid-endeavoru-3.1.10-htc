@@ -156,12 +156,13 @@ static void cpufreq_tripndroid_timer(unsigned long data)
 	if (load_since_change > cpu_load)
 		cpu_load = load_since_change;
 
-	if (powersaving_active == 1 && tdf_suspend_state == 0) {
-		pcpu->policy->max = TDF_FREQ_PWRSAVE_MAX;
+	if ((powersaving_active == 1) &&
+			(tdf_suspend_state == 0)) {
+	pcpu->policy->max = TDF_FREQ_PWRSAVE_MAX;
 	}
 
 	if (tdf_suspend_state == 1) {
-		pcpu->policy->max = TDF_FREQ_SLEEP_MAX;
+	pcpu->policy->max = TDF_FREQ_SLEEP_MAX;
 	}
 
 	if (cpu_load >= go_hispeed_load) {
