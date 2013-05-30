@@ -79,8 +79,8 @@ static unsigned int normal_thresholds[] = {
 };
 
 static unsigned int powersaving_thresholds[] = {
-/*       1,  2, - on-line cpus target */
-         3,  UINT_MAX
+/*      1,  2, - on-line cpus target */
+        5,  UINT_MAX
 };
 
 static unsigned int NwNs_Threshold[8] = {12, 0, 20, 7, 25, 10, 0, 18};
