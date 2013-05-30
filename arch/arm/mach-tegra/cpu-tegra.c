@@ -511,7 +511,6 @@ int tegra_update_cpu_speed(unsigned long rate)
 	struct cpufreq_freqs freqs;
 
 	unsigned long rate_save = rate;
-	int orig_nice = 0;
 	freqs.old = tegra_getspeed(0);
 	freqs.new = rate;
 
@@ -524,13 +523,6 @@ int tegra_update_cpu_speed(unsigned long rate)
 
 	if (freqs.new < rate_save && rate_save >= 880000) {
 		if (is_lp_cluster()) {
-			orig_nice = task_nice(current);
-
-			if(can_nice(current, -20)) {
-				set_user_nice(current, -20);
-			} else {
-				pr_err("[cpufreq] can not nice(-20)!!");
-			}
 
 			/* set rate to max of LP mode */
 			ret = clk_set_rate(cpu_clk, 475000 * 1000);
@@ -596,14 +588,6 @@ int tegra_update_cpu_speed(unsigned long rate)
 	}
         MF_DEBUG("00UP0046");
 error:
-	if (orig_nice != task_nice(current)) {
-		if (can_nice(current, orig_nice)) {
-			set_user_nice(current, orig_nice);
-		} else {
-			pr_err("[cpufreq] can not restore nice(%d)!!",
-					orig_nice);
-		}
-	}
 
         MF_DEBUG("00UP0047");
 	return ret;
