@@ -128,13 +128,15 @@ static int get_slowest_cpu(void)
 static unsigned int calculate_load(void)
 {
 	unsigned int avg_nr_run = avg_nr_running();
-	unsigned int nr_run;
+	unsigned int nr_run, nr_fshift;
 	unsigned int select_threshold;
 
 	if (!powersaving_active) {
+		nr_fshift = 3;
 		select_threshold =  ARRAY_SIZE(normal_thresholds);
 	}
 	else {
+		nr_fshift = 1;
 		select_threshold =  ARRAY_SIZE(powersaving_thresholds);
 	}
 
@@ -146,8 +148,8 @@ static unsigned int calculate_load(void)
 			nr_threshold = powersaving_thresholds[nr_run - 1];
 
 		if (nr_run_last <= nr_run)
-			nr_threshold += TDF_FSHIFT / nr_run_hysteresis;
-		if (avg_nr_run <= (nr_threshold << (FSHIFT - TDF_FSHIFT_EXP)))
+			nr_threshold += (1 << nr_fshift) / nr_run_hysteresis;
+		if (avg_nr_run <= (nr_threshold << (FSHIFT - nr_fshift)))
 			break;
 	}
 	nr_run_last = nr_run;

@@ -19,5 +19,3 @@
 /* standard defines first */
 #define TRIPNDROID_HP_PAUSE		10000
 #define TRIPNDROID_HP_SAMPLE_MS		20000
-#define TDF_FSHIFT_EXP			3
-#define TDF_FSHIFT			(1 << TDF_FSHIFT_EXP)
