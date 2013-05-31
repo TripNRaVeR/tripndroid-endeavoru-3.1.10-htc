@@ -97,16 +97,6 @@ module_param_cb(force_policy_max, &policy_ops, &force_policy_max, 0644);
 
 static unsigned int cpu_user_cap;
 
-void htc_set_cpu_user_cap(const unsigned int value)
-{
-	cpu_user_cap = 0;
-}
-
-void htc_get_cpu_user_cap(unsigned int *value)
-{
-	*value = 0;
-}
-
 static inline void _cpu_user_cap_set_locked(void)
 {
 #ifndef CONFIG_TEGRA_CPU_CAP_EXACT_FREQ
@@ -393,7 +383,7 @@ static void tegra_cpu_edp_init(bool resume)
 	if(hboot_temp >= 75){
 		freq = 640000;
 		printk(KERN_INFO "[TMS] HBootTemp= %lu > 75 , set freq = %d \n", hboot_temp, freq);
-		htc_set_cpu_user_cap(freq);
+		tegra_cpu_set_speed_cap(freq);
 	}
 
 	if (!(cpu_edp_limits || system_edp_limits)) {
