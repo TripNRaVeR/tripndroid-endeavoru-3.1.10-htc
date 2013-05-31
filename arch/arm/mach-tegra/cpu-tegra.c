@@ -34,7 +34,6 @@
 #include <linux/debugfs.h>
 #include <linux/cpu.h>
 #include <linux/pm_qos_params.h>
-#include <linux/earlysuspend.h>
 #include <linux/spinlock.h>
 #include <linux/workqueue.h>
 
@@ -666,27 +665,11 @@ _out:
 	return ret;
 }
 
-#ifdef CONFIG_HAS_EARLYSUSPEND
-static struct pm_qos_request_list cap_cpu_freq_req;
-#define CAP_CPU_FREQ_MAX 640000
-
-static int enter_early_suspend = 0;
-
-#ifdef CONFIG_TEGRA_CPU_AP33
-#define BOOST_CPU_FREQ_MIN 1500000
-static int CAP_CPU_FREQ_TARGET = 1500000;
-#else
-#define BOOST_CPU_FREQ_MIN 1700000
-static int CAP_CPU_FREQ_TARGET = 1700000;
-#endif
-#endif // CONFIG_HAS_EARLYSUSPEND
-
 static int tegra_pm_notify(struct notifier_block *nb, unsigned long event,
 	void *dummy)
 {
-	int cpu;
+	mutex_lock(&tegra_cpu_lock);
 	if (event == PM_SUSPEND_PREPARE) {
-		mutex_lock(&tegra_cpu_lock);
 		is_suspended = true;
 		pr_info("Tegra cpufreq suspend: setting frequency to %d kHz\n",
 			freq_table[suspend_index].frequency);
@@ -695,31 +678,15 @@ static int tegra_pm_notify(struct notifier_block *nb, unsigned long event,
 		tegra_auto_hotplug_governor(
 			freq_table[suspend_index].frequency, true);
 #endif
-		mutex_unlock(&tegra_cpu_lock);
-		for_each_online_cpu(cpu) {
-			if(cpu==0)
-				continue;
-			cpu_down(cpu);
-		}
 	} else if (event == PM_POST_SUSPEND) {
 		unsigned int freq;
-		mutex_lock(&tegra_cpu_lock);
 		is_suspended = false;
 		tegra_cpu_edp_init(true);
-		if (wake_reason_resume == 0x80) {
-			tegra_update_cpu_speed(BOOST_CPU_FREQ_MIN);
-#ifndef CONFIG_TDF_CPU_HOTPLUG
-			tegra_auto_hotplug_governor(
-				BOOST_CPU_FREQ_MIN, false);
-#endif
-		} else {
-			tegra_cpu_set_speed_cap(&freq);
-		}
-
+		tegra_cpu_set_speed_cap(&freq);
 		pr_info("Tegra cpufreq resume: restoring frequency to %d kHz\n",
 			freq);
-		mutex_unlock(&tegra_cpu_lock);
 	}
+	mutex_unlock(&tegra_cpu_lock);
 
 	return NOTIFY_OK;
 }
