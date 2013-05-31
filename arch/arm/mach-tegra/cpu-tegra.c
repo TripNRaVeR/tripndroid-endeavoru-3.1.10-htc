@@ -600,11 +600,6 @@ unsigned long tegra_cpu_highest_speed(void) {
 	return rate;
 }
 
-/* disable thermal throttling limitations */
-unsigned int no_thermal_throttle_limit = 0;
-module_param(no_thermal_throttle_limit, uint, 0644);
-EXPORT_SYMBOL (no_thermal_throttle_limit);
-
 int tegra_cpu_set_speed_cap(unsigned int *speed_cap)
 {
 	int ret = 0;
