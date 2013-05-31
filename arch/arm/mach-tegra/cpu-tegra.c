@@ -651,38 +651,6 @@ int tegra_suspended_target(unsigned int target_freq)
 	return tegra_update_cpu_speed(new_speed);
 }
 
-int tegra_input_boost (
-   int cpu,
-   unsigned int target_freq
-   )
-{
-    int ret = 0;
-    unsigned int curfreq = 0;
-
-    mutex_lock(&tegra_cpu_lock);
-    curfreq = tegra_getspeed(0);
-    target_freq = tegra_throttle_governor_speed(target_freq);
-    target_freq = edp_governor_speed(target_freq);
-    target_freq = user_cap_speed(target_freq);
-    target_freq = powersave_speed(target_freq);
-
-    /* dont need to boost cpu at this moment */
-    if (!curfreq || curfreq >= target_freq) {
-        ret = -EINVAL;
-        goto _no_boost;
-    }
-
-    target_cpu_speed[cpu] = target_freq;
-
-    /* will auto. round-rate */
-    ret = tegra_update_cpu_speed(target_freq);
-_no_boost:
-    mutex_unlock(&tegra_cpu_lock);
-
-    return ret;
-}
-EXPORT_SYMBOL (tegra_input_boost);
-
 static int tegra_target(struct cpufreq_policy *policy,
 		       unsigned int target_freq,
 		       unsigned int relation)
