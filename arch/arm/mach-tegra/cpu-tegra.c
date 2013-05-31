@@ -155,8 +155,6 @@ static unsigned int user_cap_speed(unsigned int requested_speed)
 	return requested_speed;
 }
 
-#define powersave_speed(requested_speed) (requested_speed)
-
 #ifdef CONFIG_TEGRA_THERMAL_THROTTLE
 
 static ssize_t show_throttle(struct cpufreq_policy *policy, char *buf)
@@ -621,8 +619,6 @@ int tegra_cpu_set_speed_cap(unsigned int *speed_cap)
 
 	new_speed = user_cap_speed(new_speed);
 
-	new_speed = powersave_speed(new_speed);
-
 	if (speed_cap)
 		*speed_cap = new_speed;
 
@@ -644,7 +640,6 @@ int tegra_suspended_target(unsigned int target_freq)
 	/* apply only "hard" caps */
 	new_speed = tegra_throttle_governor_speed(new_speed);
 	new_speed = edp_governor_speed(new_speed);
-	new_speed = powersave_speed(new_speed);
 
 	return tegra_update_cpu_speed(new_speed);
 }
