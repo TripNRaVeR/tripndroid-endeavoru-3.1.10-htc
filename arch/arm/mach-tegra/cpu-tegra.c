@@ -42,7 +42,7 @@
 
 #include <mach/clk.h>
 #include <mach/edp.h>
-#include <mach/mfootprint.h>
+
 #include "board.h"
 #include "clock.h"
 #include "cpu-tegra.h"
@@ -615,24 +615,22 @@ int tegra_cpu_set_speed_cap(unsigned int *speed_cap)
 	if (is_suspended)
 		return -EBUSY;
 
-    MF_DEBUG("00UP0030");
 	new_speed = tegra_throttle_governor_speed(new_speed);
-    MF_DEBUG("00UP0031");
+
 	new_speed = edp_governor_speed(new_speed);
-    MF_DEBUG("00UP0032");
+
 	new_speed = user_cap_speed(new_speed);
-    MF_DEBUG("00UP0033");
+
 	new_speed = powersave_speed(new_speed);
-    MF_DEBUG("00UP0034");
 
 	if (speed_cap)
 		*speed_cap = new_speed;
 
 	ret = tegra_update_cpu_speed(new_speed);
-	MF_DEBUG("00UP0049");
+
 	if (ret == 0)
 		tegra_auto_hotplug_governor(new_speed, false);
-	MF_DEBUG("00UP0050");
+
 	return ret;
 }
 
