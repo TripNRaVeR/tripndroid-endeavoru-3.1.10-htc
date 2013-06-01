@@ -1010,6 +1010,9 @@ static ssize_t nvsd_registers_show(struct kobject *kobj,
 	struct tegra_dc *dc = nvhost_get_drvdata(ndev);
 	ssize_t res = 0;
 
+	clk_enable(dc->clk);
+	tegra_dc_io_start(dc);
+
 	mutex_lock(&dc->lock);
 	if (!dc->enabled) {
 		mutex_unlock(&dc->lock);
@@ -1035,6 +1038,9 @@ static ssize_t nvsd_registers_show(struct kobject *kobj,
 	NVSD_PRINT_REG(DC_DISP_SD_SOFT_CLIPPING);
 	NVSD_PRINT_REG(DC_DISP_SD_SMOOTH_K);
 #endif
+
+	tegra_dc_io_end(dc);
+	clk_disable(dc->clk);
 
 	return res;
 }
