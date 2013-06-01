@@ -141,11 +141,20 @@ static bool check_ref_to_sync(struct tegra_dc_mode *mode)
 int tegra_dc_calc_refresh(const struct tegra_dc_mode *m)
 {
 	long h_total, v_total, refresh;
+	long pclk;
+
+	if (m->rated_pclk > 0)
+		pclk = m->rated_pclk;
+	else
+		pclk = m->pclk;
+
 	h_total = m->h_active + m->h_front_porch + m->h_back_porch +
 		m->h_sync_width;
 	v_total = m->v_active + m->v_front_porch + m->v_back_porch +
 		m->v_sync_width;
-	refresh = m->pclk / h_total;
+	if (!pclk || !h_total || !v_total)
+		return 0;
+	refresh = pclk / h_total;
 	refresh *= 1000;
 	refresh /= v_total;
 	return refresh;
