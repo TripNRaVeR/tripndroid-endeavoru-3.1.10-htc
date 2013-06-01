@@ -2308,7 +2308,7 @@ static int tegra_dc_probe(struct nvhost_device *ndev,
 	ret = tegra_dc_set(dc, ndev->id);
 	if (ret < 0) {
 		dev_err(&ndev->dev, "can't add dc\n");
-		goto err_free_irq;
+		goto err_put_emc_clk;
 	}
 
 	nvhost_set_drvdata(ndev, dc);
@@ -2348,7 +2348,7 @@ static int tegra_dc_probe(struct nvhost_device *ndev,
 			dev_name(&ndev->dev), dc)) {
 		dev_err(&ndev->dev, "request_irq %d failed\n", irq);
 		ret = -EBUSY;
-		goto err_put_emc_clk;
+		goto err_disable_dc;
 	}
 
 	tegra_dc_create_debugfs(dc);
@@ -2374,8 +2374,11 @@ static int tegra_dc_probe(struct nvhost_device *ndev,
 		}
 
 		dc->fb = tegra_fb_register(ndev, dc, dc->pdata->fb, fb_mem);
-		if (IS_ERR_OR_NULL(dc->fb))
+		if (IS_ERR_OR_NULL(dc->fb)) {
 			dc->fb = NULL;
+			dev_err(&ndev->dev, "failed to register fb\n");
+			goto err_remove_debugfs;
+		}
 	}
 
 	if (dc->out && dc->out->hotplug_init)
@@ -2391,8 +2394,22 @@ static int tegra_dc_probe(struct nvhost_device *ndev,
 	spin_lock_init(&dc_spinlock_clk);
 	return 0;
 
-err_free_irq:
+err_remove_debugfs:
+	tegra_dc_remove_debugfs(dc);
 	free_irq(irq, dc);
+err_disable_dc:
+	if (dc->ext) {
+		tegra_dc_ext_disable(dc->ext);
+		tegra_dc_ext_unregister(dc->ext);
+	}
+	mutex_lock(&dc->lock);
+	if (dc->enabled)
+		_tegra_dc_disable(dc);
+	dc->enabled = false;
+	mutex_unlock(&dc->lock);
+#ifdef CONFIG_SWITCH
+	switch_dev_unregister(&dc->modeset_switch);
+#endif
 err_put_emc_clk:
 	clk_put(emc_clk);
 err_put_clk:
