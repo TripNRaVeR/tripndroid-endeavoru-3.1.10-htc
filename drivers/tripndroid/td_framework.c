@@ -28,7 +28,7 @@ unsigned int tdf_cpu_load = 0;
 /* make available to userspace */
 unsigned int powersaving_active = 0;
 unsigned int tdf_fast_charge = 0;
-unsigned int tdf_ts_fix = 1;
+unsigned int tdf_ts_fix = 0;
 
 /* create sysfs structure start */
 struct kobject *tdf_kobject;
