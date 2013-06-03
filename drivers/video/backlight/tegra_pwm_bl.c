@@ -21,61 +21,15 @@
 #include <linux/slab.h>
 #include <linux/tegra_pwm_bl.h>
 #include <linux/delay.h>
-#include <mach/dc.h>
-#include <mach/panel_id.h>
-#include <mach/board_htc.h>
-extern int tegra_dsi_send_panel_short_cmd(struct tegra_dc *dc, u8 *pdata, u8 data_len);
 
+#include <mach/dc.h>
+
+extern int tegra_dsi_send_panel_short_cmd(struct tegra_dc *dc, u8 *pdata, u8 data_len);
 extern struct tegra_dc *tegra_dc_get_dc(unsigned idx);
 extern unsigned long g_panel_id;
 
 static u8 enhance_on[]={0x55,0x83};
 static u8 enhance_off[]={0x55,0x03};
-
-static ssize_t store(struct device *dev,
-					struct device_attribute *attr,
-					const char *buf, size_t count)
-{
-	struct tegra_dc *dc;
-	int value = 1;
-
-	sscanf(buf,"%d\n",&value);
-
-	dc = tegra_dc_get_dc(0);
-
-	switch (PANEL_MASK(g_panel_id)) {
-		case PANEL_ID_SHARP_HX_C3:
-		case PANEL_ID_SHARP_HX_C4:
-		case PANEL_ID_SHARP_HX_C5:
-		case PANEL_ID_SHARP_HX:
-		case PANEL_ID_SHARP_HX_43:
-			enhance_on[0] = 0xE3;
-			enhance_on[1] = 0x01;
-			enhance_off[0] = 0xE3;
-			enhance_off[1] = 0x00;
-			break;
-		default:
-			break;
-	}
-
-	if ( value == 1)
-	{
-		tegra_dsi_send_panel_short_cmd(dc, enhance_on, ARRAY_SIZE(enhance_on));
-		printk("[DISP]enable color enhancement %d\n", value);
-	} else
-	{
-		tegra_dsi_send_panel_short_cmd(dc, enhance_off, ARRAY_SIZE(enhance_off));
-		printk("[DISP]disable color enhancement %d\n", value);
-	}
-	return count;
-}
-static ssize_t show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	return ;
-}
-
-static DEVICE_ATTR(enhance, 0664, show, store);
 
 struct tegra_pwm_bl_data {
 	struct device *dev;
@@ -84,17 +38,17 @@ struct tegra_pwm_bl_data {
 	struct tegra_dc_pwm_params params;
 	int (*check_fb)(struct device *dev, struct fb_info *info);
 };
-static bool bkl_debug = true;
 
 static int tegra_pwm_backlight_update_status(struct backlight_device *bl)
 {
 	struct tegra_pwm_bl_data *tbl = dev_get_drvdata(&bl->dev);
 	int brightness = bl->props.brightness;
 	int max = bl->props.max_brightness;
+
 	struct tegra_dc *dc;
 	u8 pdata[]={0x53,0x2C,0x51,0xFF};
+
 	if (!bl->props.bkl_on) {
-		/*printk(KERN_DEBUG "[DISP] %s skip brightness=%d ,duty_cycle=%d\n",__FUNCTION__,brightness,tbl->params.duty_cycle);*/
 		return 0;
 	}
 
@@ -117,15 +71,9 @@ static int tegra_pwm_backlight_update_status(struct backlight_device *bl)
 #else
 	tbl->params.duty_cycle = brightness & 0xFF;
 #endif
-	if (brightness == 0) {
-		bkl_debug = false;
-		printk(KERN_INFO "[DISP] %s brightness=%d ,duty_cycle=%d\n",__FUNCTION__,brightness,tbl->params.duty_cycle);
-	}
-	else if (bkl_debug && (brightness > 0)) {
-		bkl_debug = false;
-		printk(KERN_INFO "[DISP] %s brightness=%d ,duty_cycle=%d\n",__FUNCTION__,brightness,tbl->params.duty_cycle);
-	}
+
 	pdata[3]=tbl->params.duty_cycle;
+
 	/* Call tegra display controller function to update backlight */
 	dc = tegra_dc_get_dc(tbl->which_dc);
 	if (tbl->params.backlight_mode==MIPI_BACKLIGHT){
@@ -166,6 +114,7 @@ static int tegra_pwm_backlight_probe(struct platform_device *pdev)
 	struct platform_tegra_pwm_backlight_data *data;
 	struct backlight_device *bl;
 	struct tegra_pwm_bl_data *tbl;
+	struct tegra_dc *dc;
 	int ret;
 
 	data = pdev->dev.platform_data;
@@ -195,30 +144,39 @@ static int tegra_pwm_backlight_probe(struct platform_device *pdev)
 	tbl->params.dimming_enable = data->dimming_enable;
 
 	memset(&props, 0, sizeof(struct backlight_properties));
+
 	props.cam_launch_bkl_value = data->cam_launch_bkl_value;
 	props.type = BACKLIGHT_RAW;
 	props.max_brightness = data->max_brightness;
-	bl = backlight_device_register(dev_name(&pdev->dev), &pdev->dev, tbl,
-			&tegra_pwm_backlight_ops, &props);
+
+	bl = backlight_device_register(dev_name(&pdev->dev), &pdev->dev, tbl, &tegra_pwm_backlight_ops, &props);
 	if (IS_ERR(bl)) {
 		dev_err(&pdev->dev, "failed to register backlight\n");
 		ret = PTR_ERR(bl);
 		goto err_bl;
 	}
 
-	if (board_mfg_mode() == BOARD_MFG_MODE_FACTORY2)
-		ret = device_create_file(&pdev->dev, &dev_attr_enhance);
-
 	bl->props.bkl_on = 1;
 	bl->props.brightness = data->dft_brightness;
+
+	enhance_on[0] = 0xE3;
+	enhance_on[1] = 0x01;
+	enhance_off[0] = 0xE3;
+	enhance_off[1] = 0x00;
+
+	dc = tegra_dc_get_dc(0);
 
 	switch(data->backlight_status) {
 		case BACKLIGHT_SKIP_WHEN_PROBE:
 			break;
 		case BACKLIGHT_DISABLE:
+			tegra_dsi_send_panel_short_cmd(dc, enhance_off, ARRAY_SIZE(enhance_off));
+			pr_info("TDF: Color enhancement disabled!");
 			bl->props.bkl_on = 0;
 			break;
 		case BACKLIGHT_ENABLE:
+			tegra_dsi_send_panel_short_cmd(dc, enhance_on, ARRAY_SIZE(enhance_on));
+			pr_info("TDF: Color enhancement enabled!");
 		default:
 			backlight_update_status(bl);
 	}
@@ -266,4 +224,3 @@ module_exit(tegra_pwm_backlight_exit);
 MODULE_DESCRIPTION("Tegra PWM Backlight Driver");
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("platform:tegra-pwm-backlight");
-
