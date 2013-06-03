@@ -20,6 +20,7 @@
 #define ATAG_HWID            0x4d534D72
 #define ATAG_GS              0x5441001d
 #define ATAG_PS              0x5441001c
+#define ATAG_WS		     0x54410023
 #define ATAG_CSA             0x5441001f
 #define ATAG_CSA             0x5441001f
 #define ATAG_SKUID           0x4d534D73
@@ -280,6 +281,17 @@ static int __init parse_tag_als_calibration(const struct tag *tag)
 	return 0;
 }
 __tagtable(ATAG_ALS, parse_tag_als_calibration);
+
+unsigned int ws_kadc;
+EXPORT_SYMBOL(ws_kadc);
+static int __init parse_tag_ws_calibration(const struct tag *tag)
+{
+	ws_kadc = tag->u.als_kadc.kadc;
+
+	return 0;
+}
+
+__tagtable(ATAG_WS, parse_tag_ws_calibration);
 
 BLOCKING_NOTIFIER_HEAD(psensor_notifier_list);
 
