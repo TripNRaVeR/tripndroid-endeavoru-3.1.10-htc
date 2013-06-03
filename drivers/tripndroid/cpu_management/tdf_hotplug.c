@@ -250,8 +250,8 @@ static void tripndroid_hp_wt(struct work_struct *work)
 
 	state = mp_decision();
 	switch (state) {
-	case TRIPNDROID_HP_IDLE:
 	case TRIPNDROID_HP_DISABLED:
+	case TRIPNDROID_HP_IDLE:
 		break;
 	case TRIPNDROID_HP_DOWN:
                 cpu = get_slowest_cpu();
