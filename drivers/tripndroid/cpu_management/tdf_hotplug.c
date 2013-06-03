@@ -203,8 +203,7 @@ static int mp_decision(void)
 			}
 		}
 		else if ((online_cpus > 1) && (current_run <= NwNs_Threshold[index+1])) {
-			if (total_time >= TwTs_Threshold[index+1]) {
-				if (online_cpus > req_cpus)
+			if ((total_time >= TwTs_Threshold[index+1]) && (online_cpus > req_cpus)) {
 					next_state = TRIPNDROID_HP_DOWN;
 			}
 		}
