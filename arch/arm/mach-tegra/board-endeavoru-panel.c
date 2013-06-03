@@ -36,9 +36,8 @@
 #include <mach/hardware.h>
 #include <mach/panel_id.h>
 #include <mach/board_htc.h>
-#include <mach/tegra_fb.h>
-
 #include "board.h"
+#include "board-endeavoru.h"
 #include "devices.h"
 #include "gpio-names.h"
 #include "tegra3_host1x_devices.h"
@@ -50,20 +49,28 @@
 
 #define DC_CTRL_MODE	TEGRA_DC_OUT_ONE_SHOT_MODE
 /* Select panel to be used. */
+#define AVDD_LCD PMU_TCA6416_GPIO_PORT17
 #define DSI_PANEL_RESET 1
+
+#define endeavor_lvds_shutdown		TEGRA_GPIO_PL2
+#define endeavor_hdmi_hpd		TEGRA_GPIO_PN7
+#define endeavor_dsi_panel_reset	TEGRA_GPIO_PW0
+
+#define endeavor_lcd_2d_3d		TEGRA_GPIO_PH1
+#define endeavor_lcd_swp_pl		TEGRA_GPIO_PH2
 
 #ifdef CONFIG_TEGRA_DC
 static struct regulator *endeavor_dsi_reg = NULL;
-static struct regulator *v_lcm_3v3 = NULL;
+static struct regulator *v_lcm_3v = NULL;
 static struct regulator *v_lcmio_1v8 = NULL;
 
 static struct regulator *endeavor_hdmi_reg = NULL;
 static struct regulator *endeavor_hdmi_pll = NULL;
 #endif
 
-#define LCM_TE			TEGRA_GPIO_PJ1
-#define LCM_PWM			TEGRA_GPIO_PW1
-#define LCM_RST			TEGRA_GPIO_PN6
+#define LCM_TE		TEGRA_GPIO_PJ1
+#define LCM_PWM 	TEGRA_GPIO_PW1
+#define LCM_RST 	TEGRA_GPIO_PN6
 
 #define MHL_INT         TEGRA_GPIO_PC7
 #define MHL_USB_SEL     TEGRA_GPIO_PE0
@@ -73,6 +80,8 @@ static struct regulator *endeavor_hdmi_pll = NULL;
 #define MHL_DDC_CLK     TEGRA_GPIO_PV4
 #define MHL_DDC_DATA    TEGRA_GPIO_PV5
 #define MHL_3V3_EN      TEGRA_GPIO_PY2
+
+extern const int  gpio_to_pingroup[TEGRA_MAX_GPIO];
 
 static struct workqueue_struct *bkl_wq;
 static struct work_struct bkl_work;
@@ -125,36 +134,30 @@ static tegra_dc_bl_output endeavor_bl_output_measured_a02 = {
 	176, 178, 178, 179, 180, 181, 182, 182,
 	183, 184, 185, 186, 186, 187, 188, 188
 };
+
 static atomic_t sd_brightness = ATOMIC_INIT(255);
 
 /*global varible for work around*/
 static bool g_display_on = true;
+
 static p_tegra_dc_bl_output bl_output;
 
 #define BACKLIGHT_MAX 255
 
 #define ORIG_PWM_MAX 255
-#define ORIG_PWM_DEF 78
+#define ORIG_PWM_DEF 142
 #define ORIG_PWM_MIN 30
 
-#define MAP_SHARP_MAX 255
-#define MAP_SHARP_DEF 78
-#define MAP_SHARP_MIN 7
-
-#define MAP_SONY_MAX 255
-#define MAP_SONY_DEF 78
-#define MAP_SONY_MIN 7
-
-#define MAP_AUO_MAX 255
-#define MAP_AUO_DEF 78
-#define MAP_AUO_MIN 7
+#define MAP_PWM_MAX     255
+#define MAP_PWM_DEF     90
+#define MAP_PWM_MIN     7
 
 #define MAP_PWM_LOW_DEF         79
 #define MAP_PWM_HIGH_DEF        102
 
-static int max_pwm = MAP_SHARP_MAX;
-static int def_pwm = MAP_SHARP_DEF;
-static int min_pwm = MAP_SHARP_MIN;
+static int max_pwm = MAP_PWM_MAX;
+static int def_pwm = MAP_PWM_DEF;
+static int min_pwm = MAP_PWM_MIN;
 
 static unsigned char shrink_pwm(int val)
 {
@@ -169,8 +172,6 @@ static unsigned char shrink_pwm(int val)
 	else
 	shrink_br = def_pwm +
 	(val-ORIG_PWM_DEF)*(max_pwm-def_pwm)/(ORIG_PWM_MAX-ORIG_PWM_DEF);
-
-	//pr_info("brightness orig = %d, transformed=%d\n", val, shrink_br);
 
 	return shrink_br;
 }
@@ -209,7 +210,6 @@ static struct platform_tegra_pwm_backlight_data endeavor_disp1_backlight_data = 
 	.check_fb	= endeavor_disp1_check_fb,
 	.backlight_status	= BACKLIGHT_ENABLE,
 	.dimming_enable	= true,
-	.cam_launch_bkl_value = 181,
 };
 
 static struct platform_device endeavor_disp1_backlight_device = {
@@ -311,15 +311,16 @@ static struct resource endeavor_disp2_resources[] = {
 };
 
 static struct tegra_dc_sd_settings endeavor_sd_settings = {
-	.enable = 1, /* Normal mode operation */
+	.enable = 1, /* enabled by default. */
 	.use_auto_pwm = false,
 	.hw_update_delay = 0,
 	.bin_width = -1,
 	.aggressiveness = 1,
 	.phase_in_adjustments = true,
+	.use_vid_luma = false,
 #ifdef CONFIG_TEGRA_SD_GEN2
 	.k_limit_enable = true,
-	.k_limit = 180,
+	.k_limit = 200,
 	.sd_window_enable = false,
 	.soft_clipping_enable = true,
 	/* Low soft clipping threshold to compensate for aggressive k_limit */
@@ -327,7 +328,6 @@ static struct tegra_dc_sd_settings endeavor_sd_settings = {
 	.smooth_k_enable = true,
 	.smooth_k_incr = 4,
 #endif
-	.use_vid_luma = false,
 	/* Default video coefficients */
 	.coeff = {5, 9, 2},
 	.fc = {0, 0},
@@ -414,8 +414,8 @@ static struct tegra_dc_sd_settings endeavor_sd_settings = {
 
 static struct tegra_fb_data endeavor_hdmi_fb_data = {
 	.win		= 0,
-	.xres		= 1366,
-	.yres		= 768,
+	.xres		= 1280,
+	.yres		= 720,
 	.bits_per_pixel	= 32,
 	.flags		= TEGRA_FB_FLIP_ON_PROBE,
 };
@@ -423,10 +423,10 @@ static struct tegra_fb_data endeavor_hdmi_fb_data = {
 static struct tegra_dc_out endeavor_disp2_out = {
 	.type		= TEGRA_DC_OUT_HDMI,
 	.flags		= TEGRA_DC_OUT_HOTPLUG_HIGH,
-	.parent_clk     = "pll_d2_out0",
+	.parent_clk	= "pll_d2_out0",
 
 	.dcc_bus	= 3,
-	.hotplug_gpio	= MHL_HPD,
+	.hotplug_gpio	= endeavor_hdmi_hpd,
 
 	.max_pixclock	= KHZ2PICOS(148500),
 
@@ -451,9 +451,12 @@ static int endeavor_dsi_panel_enable(void)
 	/*TODO the power-on sequence move to bridge_reset*/
 	return 0;
 }
+
 static int bridge_reset(void)
 {
 	int err = 0;
+
+	DISP_INFO_IN();
 
 	if (is_power_on) {
 		DISP_INFO_LN("is_power_on:%d\n", is_power_on);
@@ -463,8 +466,7 @@ static int bridge_reset(void)
 	/*TODO delay for DSI hardware stable*/
 	hr_msleep(10);
 
-	/*change LCM_TE & LCM_PWM to SFIO*/
-	//tegra_gpio_disable(LCM_PWM);
+	tegra_pinmux_set_pullupdown(gpio_to_pingroup[LCM_TE],  TEGRA_PUPD_NORMAL);
 	tegra_gpio_disable(LCM_TE);
 
 	/*TODO: workaround to prevent panel off during dc_probe, remove it later*/
@@ -473,11 +475,11 @@ static int bridge_reset(void)
 		REGULATOR_GET(endeavor_dsi_reg, "avdd_dsi_csi");
 		regulator_enable(endeavor_dsi_reg);
 
-		REGULATOR_GET(v_lcm_3v3, "v_lcm_3v3");
+		REGULATOR_GET(v_lcm_3v, "v_lcm_3v");
 		REGULATOR_GET(v_lcmio_1v8, "v_lcmio_1v8");
 
 		regulator_enable(v_lcmio_1v8);
-		regulator_enable(v_lcm_3v3);
+		regulator_enable(v_lcm_3v);
 
 		DISP_INFO_LN("Workaround for first panel init sequence\n");
 		goto success;
@@ -487,7 +489,7 @@ static int bridge_reset(void)
 	REGULATOR_GET(endeavor_dsi_reg, "avdd_dsi_csi");
 	regulator_enable(endeavor_dsi_reg);
 
-	REGULATOR_GET(v_lcm_3v3, "v_lcm_3v3");
+	REGULATOR_GET(v_lcm_3v, "v_lcm_3v");
 	REGULATOR_GET(v_lcmio_1v8, "v_lcmio_1v8");
 
 	/*LCD_RST pull low*/
@@ -497,27 +499,16 @@ static int bridge_reset(void)
 	regulator_enable(v_lcmio_1v8);
 	hr_msleep(1);
 	/*Turn on LCMIO_3V3_EN*/
-	regulator_enable(v_lcm_3v3);
-	switch (g_panel_id) {
-		case PANEL_ID_ENR_SHARP_HX_XA:
-		case PANEL_ID_ENR_SHARP_HX_C3:
-		case PANEL_ID_ENRTD_SHARP_HX_XA:
-		case PANEL_ID_ENRTD_SHARP_HX_C3:
-		case PANEL_ID_ENR_SHARP_HX_C4:
-		case PANEL_ID_ENRTD_SHARP_HX_C4:
-			hr_msleep(10);
-			/*read LCD_ID0,LCD_ID1*/
-			hr_msleep(2);
-		break;
-		default:
-			hr_msleep(20);
-	}
+	regulator_enable(v_lcm_3v);
+	hr_msleep(20);
+
 	gpio_set_value(LCM_RST, 1);
-	hr_msleep(1);
+	hr_msleep(13);
 failed:
 success:
 	is_power_on = 1;
 	DISP_INFO_LN("is_power_on:%d\n", is_power_on);
+	DISP_INFO_OUT();
 
 	return err;
 }
@@ -538,7 +529,7 @@ static int ic_reset(void)
 	gpio_set_value(LCM_RST, 0);
 	hr_msleep(1);
 	gpio_set_value(LCM_RST, 1);
-	hr_msleep(10);
+	hr_msleep(25);
 
 success:
 	DISP_INFO_OUT();
@@ -554,11 +545,12 @@ static int endeavor_dsi_panel_disable(void)
 		return 0;
 	}
 
+	DISP_INFO_IN();
 	gpio_set_value(LCM_RST, 0);
 	hr_msleep(12);
 
-	REGULATOR_GET(v_lcm_3v3, "v_lcm_3v3");
-	regulator_disable(v_lcm_3v3);
+	REGULATOR_GET(v_lcm_3v, "v_lcm_3v");
+	regulator_disable(v_lcm_3v);
 	hr_msleep(5);
 
 	REGULATOR_GET(v_lcmio_1v8, "v_lcmio_1v8");
@@ -568,9 +560,10 @@ static int endeavor_dsi_panel_disable(void)
 	REGULATOR_GET(endeavor_dsi_reg, "avdd_dsi_csi");
 	regulator_disable(endeavor_dsi_reg);
 
-	/*change LCM_TE & LCM_PWM to GPIO*/
+	/*change LCM_TE to GPIO I(PD) & LCM_PWM to GPIO*/
 	//tegra_gpio_enable(LCM_PWM);
 	tegra_gpio_enable(LCM_TE);
+	tegra_pinmux_set_pullupdown(gpio_to_pingroup[LCM_TE],  TEGRA_PUPD_PULL_DOWN);
 
 	is_power_on = 0;
 	DISP_INFO_LN("is_power_on:%d\n", is_power_on);
@@ -610,7 +603,6 @@ static void endeavor_stereo_set_orientation(int mode)
 static int endeavor_dsi_panel_postsuspend(void)
 {
 	int err = 0;
-
 
 	return err;
 }
@@ -687,9 +679,21 @@ static u8 cabc[] = {0xCA,0x2D,0x27,0x26,0x25,0x25,0x25,0x21,0x20,0x20};
 static u8 pwm_setting[] = {0xC9,0x1F,0x01,0x1E,0x3F,0x00,0x80};
 static u8 data_gain[] = {0xCE,0x15,0x15,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x00};
 
+static struct tegra_dsi_cmd osc_off_cmd[]= {
+	DSI_DLY_MS(2),
+	DSI_CMD_SHORT(0x15, 0xFF, 0xEE),
+	DSI_CMD_SHORT(0x15, 0x26, 0x08),
+	DSI_DLY_MS(1),
+};
+
+static struct tegra_dsi_cmd osc_on_cmd[]= {
+	DSI_CMD_SHORT(0x15, 0x26, 0x00),
+	DSI_CMD_SHORT(0x15, 0xFF, 0x00),
+};
+
 static struct tegra_dsi_cmd dsi_init_sharp_hx_c3_cmd[]= {
 	DSI_CMD_SHORT(0x05, 0x11, 0x00),
-	DSI_DLY_MS(105),
+	DSI_DLY_MS(125),
 	DSI_CMD_LONG(0x39, init_cmd),
 	DSI_CMD_SHORT(0x15, 0xD4, 0x00),
 	DSI_CMD_SHORT(0x15, 0xBA, 0x11),
@@ -706,7 +710,7 @@ static struct tegra_dsi_cmd dsi_init_sharp_hx_c3_cmd[]= {
 
 static struct tegra_dsi_cmd dsi_init_sharp_hx_c4_cmd[]= {
 	DSI_CMD_SHORT(0x05, 0x11, 0x00),
-	DSI_DLY_MS(105),
+	DSI_DLY_MS(125),
 	DSI_CMD_LONG(0x39, init_cmd),
 	DSI_CMD_SHORT(0x15, 0xD4, 0x00),
 	DSI_CMD_SHORT(0x15, 0xBA, 0x11),
@@ -724,7 +728,7 @@ static struct tegra_dsi_cmd dsi_init_sharp_hx_c4_cmd[]= {
 
 static struct tegra_dsi_cmd dsi_init_sharp_hx_c5_cmd[]= {
 	DSI_CMD_SHORT(0x05, 0x11, 0x00),
-	DSI_DLY_MS(120),
+	DSI_DLY_MS(125),
 	DSI_CMD_LONG(0x39, init_cmd),
 	DSI_CMD_SHORT(0x15, 0xD4, 0x00),
 	DSI_CMD_LONG(0x39, dsi_set),
@@ -3057,20 +3061,20 @@ static struct tegra_dsi_cmd dsi_init_sharp_unknow_cmd[]= {
 	DSI_CMD_SHORT(0x15, 0x25, 0x26),
 
 	DSI_CMD_SHORT(0x15, 0x00, 0x00),
-	DSI_CMD_SHORT(0x15, 0x01, 0x05),
-	DSI_CMD_SHORT(0x15, 0x02, 0x10),
-	DSI_CMD_SHORT(0x15, 0x03, 0x17),
-	DSI_CMD_SHORT(0x15, 0x04, 0x22),
-	DSI_CMD_SHORT(0x15, 0x05, 0x26),
-	DSI_CMD_SHORT(0x15, 0x06, 0x29),
-	DSI_CMD_SHORT(0x15, 0x07, 0x29),
-	DSI_CMD_SHORT(0x15, 0x08, 0x26),
-	DSI_CMD_SHORT(0x15, 0x09, 0x23),
-	DSI_CMD_SHORT(0x15, 0x0A, 0x17),
-	DSI_CMD_SHORT(0x15, 0x0B, 0x12),
-	DSI_CMD_SHORT(0x15, 0x0C, 0x06),
-	DSI_CMD_SHORT(0x15, 0x0D, 0x02),
-	DSI_CMD_SHORT(0x15, 0x0E, 0x01),
+	DSI_CMD_SHORT(0x15, 0x01, 0x07),
+	DSI_CMD_SHORT(0x15, 0x02, 0x0B),
+	DSI_CMD_SHORT(0x15, 0x03, 0x11),
+	DSI_CMD_SHORT(0x15, 0x04, 0x18),
+	DSI_CMD_SHORT(0x15, 0x05, 0x20),
+	DSI_CMD_SHORT(0x15, 0x06, 0x27),
+	DSI_CMD_SHORT(0x15, 0x07, 0x27),
+	DSI_CMD_SHORT(0x15, 0x08, 0x25),
+	DSI_CMD_SHORT(0x15, 0x09, 0x21),
+	DSI_CMD_SHORT(0x15, 0x0A, 0x1C),
+	DSI_CMD_SHORT(0x15, 0x0B, 0x14),
+	DSI_CMD_SHORT(0x15, 0x0C, 0x0C),
+	DSI_CMD_SHORT(0x15, 0x0D, 0x06),
+	DSI_CMD_SHORT(0x15, 0x0E, 0x02),
 	DSI_CMD_SHORT(0x15, 0x0F, 0x00),
 
 	DSI_CMD_SHORT(0x15, 0xFB, 0x01),
@@ -3078,7 +3082,7 @@ static struct tegra_dsi_cmd dsi_init_sharp_unknow_cmd[]= {
 	DSI_CMD_SHORT(0x15, 0xFE, 0x01),
 
 	DSI_CMD_SHORT(0x05, 0x11, 0x00),
-	DSI_DLY_MS(105),
+	DSI_DLY_MS(125),
 
 	DSI_CMD_SHORT(0x15, 0x35, 0x00),
 	/*pwm frequency adjust*/
@@ -4024,11 +4028,15 @@ static struct tegra_dsi_cmd dsi_init_auo_nt_x7_cmd[]= {
 static struct tegra_dsi_cmd dsi_early_suspend_cmd[] = {
 	DSI_CMD_SHORT(0x05, 0x28, 0x00),
 	DSI_DLY_MS(20),
+#if(DC_CTRL_MODE & TEGRA_DC_OUT_ONE_SHOT_MODE)
 	DSI_CMD_SHORT(0x05, 0x34, 0x00),
+#endif
 };
 
 static struct tegra_dsi_cmd dsi_late_resume_cmd[] = {
+#if(DC_CTRL_MODE & TEGRA_DC_OUT_ONE_SHOT_MODE)
 	DSI_CMD_SHORT(0x15, 0x35, 0x00),
+#endif
 	DSI_CMD_SHORT(0x05, 0x29, 0x00),
 	DSI_DLY_MS(40),
 };
@@ -4036,7 +4044,9 @@ static struct tegra_dsi_cmd dsi_late_resume_cmd[] = {
 static struct tegra_dsi_cmd dsi_suspend_cmd[] = {
 	DSI_CMD_SHORT(0x05, 0x28, 0x00),
 	DSI_DLY_MS(20),
+#if(DC_CTRL_MODE & TEGRA_DC_OUT_ONE_SHOT_MODE)
 	DSI_CMD_SHORT(0x05, 0x34, 0x00),
+#endif
 	DSI_CMD_SHORT(0x05, 0x10, 0x00),
 	DSI_DLY_MS(130),
 };
@@ -4044,9 +4054,9 @@ static struct tegra_dsi_cmd dsi_suspend_cmd[] = {
 struct tegra_dsi_out endeavor_dsi = {
 	.n_data_lanes = 2,
 	.pixel_format = TEGRA_DSI_PIXEL_FORMAT_24BIT_P,
-	.rated_refresh_rate = 60,
-	.refresh_rate = 60,
 
+	.refresh_rate = 66,
+	.rated_refresh_rate = 60,
 	.virtual_channel = TEGRA_DSI_VIRTUAL_CHANNEL_0,
 
 	.panel_has_frame_buffer = true,
@@ -4054,8 +4064,8 @@ struct tegra_dsi_out endeavor_dsi = {
 
 	.panel_reset = DSI_PANEL_RESET,
 	.power_saving_suspend = true,
-	.n_init_cmd = ARRAY_SIZE(dsi_init_sharp_nt_c2_cmd),
-	.dsi_init_cmd = dsi_init_sharp_nt_c2_cmd,
+	.n_init_cmd = ARRAY_SIZE(dsi_init_sharp_nt_c2_9a_cmd),
+	.dsi_init_cmd = dsi_init_sharp_nt_c2_9a_cmd,
 
 	.n_early_suspend_cmd = ARRAY_SIZE(dsi_early_suspend_cmd),
 	.dsi_early_suspend_cmd = dsi_early_suspend_cmd,
@@ -4067,25 +4077,10 @@ struct tegra_dsi_out endeavor_dsi = {
 	.dsi_suspend_cmd = dsi_suspend_cmd,
 	.video_clock_mode = TEGRA_DSI_VIDEO_CLOCK_TX_ONLY,
 	.video_data_type = TEGRA_DSI_VIDEO_TYPE_COMMAND_MODE,
-
 	.lp_cmd_mode_freq_khz = 20000,
 
 	/* TODO: Get the vender recommended freq */
 	.lp_read_cmd_mode_freq_khz = 200000,
-
-	/* base on kernel2.6 setting */
-	.phy_timing.t_hsdexit_ns = 108,
-	.phy_timing.t_hstrail_ns = 60,
-	.phy_timing.t_datzero_ns = 172,
-	.phy_timing.t_hsprepare_ns = 68,
-	.phy_timing.t_clktrail_ns = 68,
-	.phy_timing.t_clkpost_ns = 124,
-	.phy_timing.t_clkzero_ns = 220,
-	.phy_timing.t_clkprepare_ns = 36,
-	.phy_timing.t_taget_ns = 5700,
-	.phy_timing.t_tasure_ns = 2900,
-	.phy_timing.t_tago_ns = 7100,
-	.phy_timing.t_wakeup_ns = 25700,
 };
 
 static struct tegra_stereo_out endeavor_stereo = {
@@ -4109,7 +4104,6 @@ static struct tegra_dc_mode endeavor_dsi_modes[] = {
 		.v_front_porch = 2,
 	},
 };
-
 
 static struct tegra_fb_data endeavor_dsi_fb_data = {
 	.win		= 0,
@@ -4156,6 +4150,7 @@ static struct tegra_dc_platform_data endeavor_disp1_pdata = {
 #ifdef CONFIG_TEGRA_DC_CMU
 	.cmu_enable	= 1,
 #endif
+
 };
 
 static struct nvhost_device endeavor_disp1_device = {
@@ -4240,9 +4235,6 @@ static void bkl_update(unsigned long data) {
  * to keep the code out of the display driver, keeping it closer to upstream
  */
 struct early_suspend endeavor_panel_early_suspender;
-#ifdef CONFIG_HTC_ONMODE_CHARGING
-struct early_suspend endeavor_panel_onchg_suspender;
-#endif
 
 static void endeavor_panel_early_suspend(struct early_suspend *h)
 {
@@ -4261,6 +4253,8 @@ static void endeavor_panel_early_suspend(struct early_suspend *h)
 		fb_blank(registered_fb[1], FB_BLANK_NORMAL);
 }
 
+
+
 static void endeavor_panel_late_resume(struct early_suspend *h)
 {
 	unsigned i;
@@ -4270,35 +4264,7 @@ static void endeavor_panel_late_resume(struct early_suspend *h)
 
 	mod_timer(&bkl_timer, jiffies + msecs_to_jiffies(50));
 }
-
-#ifdef CONFIG_HTC_ONMODE_CHARGING
-static void endeavor_panel_onchg_suspend(struct early_suspend *h)
-{
-	struct backlight_device *bl = platform_get_drvdata(&endeavor_disp1_backlight_device);
-
-	if (bl && bl->props.bkl_on) {
-		bl->props.bkl_on = 0;
-		del_timer_sync(&bkl_timer);
-		flush_workqueue(bkl_wq);
-	}
-
-	/* power down LCD */
-	if (num_registered_fb > 0)
-		fb_blank(registered_fb[0], FB_BLANK_POWERDOWN);
-
-}
-
-static void endeavor_panel_onchg_resume(struct early_suspend *h)
-{
-	unsigned i;
-
-	fb_blank(registered_fb[0], FB_BLANK_UNBLANK);
-
-	mod_timer(&bkl_timer, jiffies + msecs_to_jiffies(50));
-
-}
-#endif /* onmode charge */
-#endif /* early suspend */
+#endif
 
 #define CAB_LOW		1
 #define CAB_DEF		2
@@ -4324,7 +4290,7 @@ static int bkl_calibration_set(void *data, u64 val)
 		break;
 		case CAB_DEF:
 		default:
-			def_pwm = MAP_SHARP_DEF;
+			def_pwm = MAP_PWM_DEF;
 	}
 	backlight_update_status(bl);
 
@@ -4338,44 +4304,58 @@ int __init endeavor_panel_init(void)
 {
 	int err;
 	int i = 0;
-	int pin_count;
-
+	int pin_count = ARRAY_SIZE(panel_init_gpios);
 	struct resource __maybe_unused *res;
 	struct board_info board_info;
-
-	DISP_INFO_IN();
 
 	err = gpio_request_array(panel_init_gpios, ARRAY_SIZE(panel_init_gpios));
 	if(err) {
 		DISP_ERR("gpio request failed\n");
 		goto failed;
 	}
-
-	pin_count = ARRAY_SIZE(panel_init_gpios);
 	for (i = 0; i < pin_count; i++) {
 		tegra_gpio_enable(panel_init_gpios[i].gpio);
 	}
 
-	bl_output = endeavor_bl_output_measured_a02;
 	tegra_get_board_info(&board_info);
+
+	BUILD_BUG_ON(ARRAY_SIZE(endeavor_bl_output_measured_a02) != 256);
+
+	bl_output = endeavor_bl_output_measured_a02;
+
+	endeavor_dsi.chip_id = tegra_get_chipid();
+	endeavor_dsi.chip_rev = tegra_get_revision();
+
+#if defined(CONFIG_TEGRA_NVMAP)
+	endeavor_carveouts[1].base = tegra_carveout_start;
+	endeavor_carveouts[1].size = tegra_carveout_size;
+#endif
+
+	tegra_gpio_enable(endeavor_hdmi_hpd);
+	gpio_request(endeavor_hdmi_hpd, "hdmi_hpd");
+	gpio_direction_input(endeavor_hdmi_hpd);
+
+	tegra_gpio_enable(endeavor_lcd_2d_3d);
+	gpio_request(endeavor_lcd_2d_3d, "lcd_2d_3d");
+	gpio_direction_output(endeavor_lcd_2d_3d, 0);
+	endeavor_stereo_set_mode(endeavor_stereo.mode_2d_3d);
+
+	tegra_gpio_enable(endeavor_lcd_swp_pl);
+	gpio_request(endeavor_lcd_swp_pl, "lcd_swp_pl");
+	gpio_direction_output(endeavor_lcd_swp_pl, 0);
+	endeavor_stereo_set_orientation(endeavor_stereo.orientation);
+
+#if !(DC_CTRL_MODE & TEGRA_DC_OUT_ONE_SHOT_MODE)
+	tegra_gpio_enable(LCM_TE);
+	gpio_request(endeavor_lcd_swp_pl, "lcd_te");
+	gpio_direction_input(LCM_TE);
+#endif
 
 #ifdef CONFIG_HAS_EARLYSUSPEND
 	endeavor_panel_early_suspender.suspend = endeavor_panel_early_suspend;
 	endeavor_panel_early_suspender.resume = endeavor_panel_late_resume;
 	endeavor_panel_early_suspender.level = EARLY_SUSPEND_LEVEL_DISABLE_FB;
 	register_early_suspend(&endeavor_panel_early_suspender);
-
-#ifdef CONFIG_HTC_ONMODE_CHARGING
-	endeavor_panel_onchg_suspender.suspend = endeavor_panel_onchg_suspend;
-	endeavor_panel_onchg_suspender.resume = endeavor_panel_onchg_resume;
-	endeavor_panel_onchg_suspender.level = EARLY_SUSPEND_LEVEL_DISABLE_FB;
-	register_onchg_suspend(&endeavor_panel_onchg_suspender);
-#endif
-#endif
-
-#if defined(CONFIG_TEGRA_NVMAP)
-	endeavor_carveouts[1].base = tegra_carveout_start;
-	endeavor_carveouts[1].size = tegra_carveout_size;
 #endif
 
 #ifdef CONFIG_TEGRA_GRHOST
@@ -4400,11 +4380,6 @@ int __init endeavor_panel_init(void)
 	tegra_move_framebuffer(tegra_fb_start, tegra_bootloader_fb_start,
 		min(tegra_fb_size, tegra_bootloader_fb_size));
 
-	if ((g_panel_id & BL_MASK) == BL_CPU) {
-		endeavor_disp1_backlight_data.backlight_mode = CPU_BACKLIGHT;
-		DISP_INFO_LN("Found XA board and setup CPU_BACKLIGHT mode\n");
-	}
-
         /*switch PWM_setting by panel_id*/
         switch (g_panel_id & BKL_CAB_MASK) {
 		case BKL_CAB_LOW:
@@ -4416,14 +4391,13 @@ int __init endeavor_panel_init(void)
 		case BKL_CAB_OFF:
 		case BKL_CAB_DEF:
 		default:
-			def_pwm = MAP_SHARP_DEF;
+			def_pwm = MAP_PWM_DEF;
         }
 
 	g_panel_id &= ~BKL_CAB_MASK;
 
 	/*switch initial command by panel_id*/
 	switch (PANEL_MASK(g_panel_id)) {
-		case PANEL_ID_SHARP_HX_XA:
 		case PANEL_ID_SHARP_HX_C3:
 			endeavor_dsi.n_init_cmd = ARRAY_SIZE(dsi_init_sharp_hx_c3_cmd);
 			endeavor_dsi.dsi_init_cmd = dsi_init_sharp_hx_c3_cmd;
@@ -4452,6 +4426,11 @@ int __init endeavor_panel_init(void)
 		case PANEL_ID_SONY_NT_C1:
 			endeavor_dsi.n_init_cmd = ARRAY_SIZE(dsi_init_sony_nt_c1_cmd);
 			endeavor_dsi.dsi_init_cmd = dsi_init_sony_nt_c1_cmd;
+
+			endeavor_dsi.n_osc_off_cmd = ARRAY_SIZE(osc_off_cmd);
+			endeavor_dsi.osc_off_cmd = osc_off_cmd;
+			endeavor_dsi.n_osc_on_cmd = ARRAY_SIZE(osc_on_cmd);
+			endeavor_dsi.osc_on_cmd = osc_on_cmd;
 			endeavor_dsi.n_cabc_cmd = ARRAY_SIZE(nt_moving_mode_cmd);
 			endeavor_dsi.dsi_cabc_moving_mode = nt_moving_mode_cmd;
 			endeavor_dsi.dsi_cabc_still_mode = nt_still_mode_cmd;
@@ -4460,6 +4439,11 @@ int __init endeavor_panel_init(void)
 		case PANEL_ID_SONY:
 			endeavor_dsi.n_init_cmd = ARRAY_SIZE(dsi_init_sony_nt_c2_cmd);
 			endeavor_dsi.dsi_init_cmd = dsi_init_sony_nt_c2_cmd;
+
+			endeavor_dsi.n_osc_off_cmd = ARRAY_SIZE(osc_off_cmd);
+			endeavor_dsi.osc_off_cmd = osc_off_cmd;
+			endeavor_dsi.n_osc_on_cmd = ARRAY_SIZE(osc_on_cmd);
+			endeavor_dsi.osc_on_cmd = osc_on_cmd;
 			endeavor_dsi.n_cabc_cmd = ARRAY_SIZE(nt_moving_mode_cmd);
 			endeavor_dsi.dsi_cabc_moving_mode = nt_moving_mode_cmd;
 			endeavor_dsi.dsi_cabc_still_mode = nt_still_mode_cmd;
@@ -4469,6 +4453,11 @@ int __init endeavor_panel_init(void)
 			endeavor_dsi.dsi_init_cmd = dsi_init_sharp_nt_c1_cmd;
 			endeavor_dsi.refresh_rate = 60;
 			endeavor_dsi_modes[0].h_front_porch = 29;
+
+			endeavor_dsi.n_osc_off_cmd = ARRAY_SIZE(osc_off_cmd);
+			endeavor_dsi.osc_off_cmd = osc_off_cmd;
+			endeavor_dsi.n_osc_on_cmd = ARRAY_SIZE(osc_on_cmd);
+			endeavor_dsi.osc_on_cmd = osc_on_cmd;
 			endeavor_dsi.n_cabc_cmd = ARRAY_SIZE(nt_moving_mode_cmd);
 			endeavor_dsi.dsi_cabc_moving_mode = nt_moving_mode_cmd;
 			endeavor_dsi.dsi_cabc_still_mode = nt_still_mode_cmd;
@@ -4476,6 +4465,11 @@ int __init endeavor_panel_init(void)
 		case PANEL_ID_SHARP_NT_C2:
 			endeavor_dsi.n_init_cmd = ARRAY_SIZE(dsi_init_sharp_nt_c2_cmd);
 			endeavor_dsi.dsi_init_cmd = dsi_init_sharp_nt_c2_cmd;
+
+			endeavor_dsi.n_osc_off_cmd = ARRAY_SIZE(osc_off_cmd);
+			endeavor_dsi.osc_off_cmd = osc_off_cmd;
+			endeavor_dsi.n_osc_on_cmd = ARRAY_SIZE(osc_on_cmd);
+			endeavor_dsi.osc_on_cmd = osc_on_cmd;
 			endeavor_dsi.n_cabc_cmd = ARRAY_SIZE(nt_moving_mode_cmd);
 			endeavor_dsi.dsi_cabc_moving_mode = nt_moving_mode_cmd;
 			endeavor_dsi.dsi_cabc_still_mode = nt_still_mode_cmd;
@@ -4483,6 +4477,11 @@ int __init endeavor_panel_init(void)
 		case PANEL_ID_SHARP_NT_C2_9A:
 			endeavor_dsi.n_init_cmd = ARRAY_SIZE(dsi_init_sharp_nt_c2_9a_cmd);
 			endeavor_dsi.dsi_init_cmd = dsi_init_sharp_nt_c2_9a_cmd;
+
+			endeavor_dsi.n_osc_off_cmd = ARRAY_SIZE(osc_off_cmd);
+			endeavor_dsi.osc_off_cmd = osc_off_cmd;
+			endeavor_dsi.n_osc_on_cmd = ARRAY_SIZE(osc_on_cmd);
+			endeavor_dsi.osc_on_cmd = osc_on_cmd;
 			endeavor_dsi.n_cabc_cmd = ARRAY_SIZE(nt_moving_mode_cmd);
 			endeavor_dsi.dsi_cabc_moving_mode = nt_moving_mode_cmd;
 			endeavor_dsi.dsi_cabc_still_mode = nt_still_mode_cmd;
@@ -4494,15 +4493,30 @@ int __init endeavor_panel_init(void)
 		case PANEL_ID_AUO_NT_C2:
 			endeavor_dsi.n_init_cmd = ARRAY_SIZE(dsi_init_auo_nt_c2_cmd);
 			endeavor_dsi.dsi_init_cmd = dsi_init_auo_nt_c2_cmd;
+
+			endeavor_dsi.n_osc_off_cmd = ARRAY_SIZE(osc_off_cmd);
+			endeavor_dsi.osc_off_cmd = osc_off_cmd;
+			endeavor_dsi.n_osc_on_cmd = ARRAY_SIZE(osc_on_cmd);
+			endeavor_dsi.osc_on_cmd = osc_on_cmd;
 		break;
 		case PANEL_ID_AUO_NT_X7:
 		case PANEL_ID_AUO:
 			endeavor_dsi.n_init_cmd = ARRAY_SIZE(dsi_init_auo_nt_x7_cmd);
 			endeavor_dsi.dsi_init_cmd = dsi_init_auo_nt_x7_cmd;
+
+			endeavor_dsi.n_osc_off_cmd = ARRAY_SIZE(osc_off_cmd);
+			endeavor_dsi.osc_off_cmd = osc_off_cmd;
+			endeavor_dsi.n_osc_on_cmd = ARRAY_SIZE(osc_on_cmd);
+			endeavor_dsi.osc_on_cmd = osc_on_cmd;
 		break;
 		default:
 			endeavor_dsi.n_init_cmd = ARRAY_SIZE(dsi_init_sharp_nt_c2_9a_cmd);
 			endeavor_dsi.dsi_init_cmd = dsi_init_sharp_nt_c2_9a_cmd;
+
+			endeavor_dsi.n_osc_off_cmd = ARRAY_SIZE(osc_off_cmd);
+			endeavor_dsi.osc_off_cmd = osc_off_cmd;
+			endeavor_dsi.n_osc_on_cmd = ARRAY_SIZE(osc_on_cmd);
+			endeavor_dsi.osc_on_cmd = osc_on_cmd;
 	}
 
 #if defined(CONFIG_TEGRA_GRHOST) && defined(CONFIG_TEGRA_DC)
@@ -4544,7 +4558,6 @@ int __init endeavor_panel_init(void)
 	if (!debugfs_create_file("calibration", 0644,
 				 bkl_debugfs_root, NULL, &bkl_calibration_fops))
 		goto failed;
-
 failed:
 	DISP_INFO_OUT();
 
