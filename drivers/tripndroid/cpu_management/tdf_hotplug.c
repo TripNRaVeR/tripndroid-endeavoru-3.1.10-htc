@@ -133,7 +133,7 @@ static unsigned int calculate_load(void)
 	unsigned int select_threshold;
 
 	if (!powersaving_active) {
-		nr_fshift = 3;
+		nr_fshift = 2;
 		select_threshold =  ARRAY_SIZE(normal_thresholds);
 	}
 	else {
