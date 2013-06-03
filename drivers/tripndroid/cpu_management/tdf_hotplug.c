@@ -70,6 +70,7 @@ extern unsigned int nr_run_hysteresis;
 extern unsigned int tdf_cpu_load;
 
 bool was_paused = false;
+static cputime64_t tdf_pause_timer = 0;
 
 static unsigned int nr_run_last;
 
@@ -232,6 +233,9 @@ static void tripndroid_hp_wt(struct work_struct *work)
 	if (ktime_to_ms(ktime_get()) <= tripndroid_hp_config.sample_ms)
 		goto out;
 
+	if (tdf_pause_timer >= ktime_to_ms(ktime_get()))
+		goto out;
+
         if (tdf_suspend_state == 1)
 		goto out;
 
@@ -262,7 +266,7 @@ static void tripndroid_hp_wt(struct work_struct *work)
                                 on_time = ktime_to_ms(ktime_get()) - per_cpu(tripndroid_hp_cpudata, cpu).on_time;
                         }
 			else if (per_cpu(tripndroid_hp_cpudata, cpu).online != cpu_online(cpu)) {
-				msleep(tripndroid_hp_config.pause);
+				tdf_pause_timer = ktime_to_ms(ktime_get()) + tripndroid_hp_config.pause;
 				was_paused = true;
                         }
                 }
@@ -276,8 +280,8 @@ static void tripndroid_hp_wt(struct work_struct *work)
                                 per_cpu(tripndroid_hp_cpudata, cpu).on_time = ktime_to_ms(ktime_get());
                         }
 			else if (per_cpu(tripndroid_hp_cpudata, cpu).online != cpu_online(cpu)) {
-                                msleep(tripndroid_hp_config.pause);
-                                was_paused = true;
+				tdf_pause_timer = ktime_to_ms(ktime_get()) + tripndroid_hp_config.pause;
+				was_paused = true;
                         }
                 }
 		break;
