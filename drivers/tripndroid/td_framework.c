@@ -22,7 +22,7 @@
 
 /* not for userspace */
 unsigned int tdf_suspend_state = 0;
-unsigned int nr_run_hysteresis = 4;
+unsigned int nr_run_hysteresis = 2;
 unsigned int tdf_cpu_load = 0;
 
 /* make available to userspace */
