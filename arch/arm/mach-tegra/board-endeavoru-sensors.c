@@ -123,11 +123,11 @@ static struct cm3629_platform_data cm3629_pdata = {
 	.power = NULL,
 	.cm3629_slave_address = 0xC0>>1,
 	.ps_calibration_rule = 1,
-	.ps1_thd_set = 0x3,
-	.ps1_thd_no_cal = 0x3,
-	.ps1_thd_with_cal = 0x3,
-	.ps_conf1_val = CM3629_PS_DR_1_80 | CM3629_PS_IT_2T |
-			CM3629_PS1_PERS_4,
+	.ps1_thd_set = 0x15,
+	.ps1_thd_no_cal = 0x90,
+	.ps1_thd_with_cal = 0xD,
+	.ps_conf1_val = CM3629_PS_DR_1_320 | CM3629_PS_IT_1_6T |
+			CM3629_PS1_PERS_3,
 	.ps_conf2_val = CM3629_PS_ITB_1 | CM3629_PS_ITR_1 |
 			CM3629_PS2_INT_DIS | CM3629_PS1_INT_DIS,
 	.ps_conf3_val = CM3629_PS2_PROL_32,
