@@ -179,20 +179,11 @@ static void scale3d_clocks(unsigned long percent)
 		if (tegra_get_chipid() == TEGRA_CHIPID_TEGRA3)
 			clk_set_rate(scale3d.clk_3d2, 0);
 
-#ifdef CONFIG_TRIPNDROID_FRAMEWORK
-		if (powersaving_active == 1 && tdf_suspend_state == 0) {
-			clk_set_rate(scale3d.clk_3d, 200000000);
-		}
-		else {
-#endif
 		if (is_tegra_camera_on())
 			clk_set_rate(scale3d.clk_3d, CAMERA_3D_CLK);
 		else
 			clk_set_rate(scale3d.clk_3d, hz);
 
-#ifdef CONFIG_TRIPNDROID_FRAMEWORK
-}
-#endif
 		if (scale3d.p_scale_emc) {
 			long after = (long) clk_get_rate(scale3d.clk_3d);
 			hz = after * scale3d.emc_slope + scale3d.emc_offset;
@@ -231,12 +222,29 @@ static void scale3d_clocks_handler(struct work_struct *work)
 {
 	unsigned int scale;
 
+#ifdef CONFIG_TRIPNDROID_FRAMEWORK
+	unsigned long curr;
+	curr = clk_get_rate(scale3d.clk_3d);
+
+	if ((powersaving_active == 1) && (tdf_suspend_state == 0)) {
+		if (curr != 192000000) {
+			clk_set_rate(scale3d.clk_3d, 192000000);
+			clk_set_rate(scale3d.clk_3d2, 192000000);
+		}
+	}
+	else {
+#endif
+
 	mutex_lock(&scale3d.lock);
 	scale = scale3d.scale;
 	mutex_unlock(&scale3d.lock);
 
 	if (scale != 0)
 		scale3d_clocks(scale);
+
+#ifdef CONFIG_TRIPNDROID_FRAMEWORK
+	}
+#endif
 }
 
 void nvhost_scale3d_suspend(struct nvhost_device *dev)
@@ -256,13 +264,6 @@ static void reset_3d_clocks(void)
 	int i = 0;
 	ktime_t t;
 
-#ifdef CONFIG_TRIPNDROID_FRAMEWORK
-		if (powersaving_active == 1 && tdf_suspend_state == 0) {
-			clk_set_rate(scale3d.clk_3d, 200000000);
-			clk_set_rate(scale3d.clk_3d2, 200000000);
-		}
-		else {
-#endif
 	if (clk_get_rate(scale3d.clk_3d) != scale3d.max_rate_3d) {
 		if (is_tegra_camera_on())
 			clk_set_rate(scale3d.clk_3d, CAMERA_3D_CLK);
@@ -282,9 +283,7 @@ static void reset_3d_clocks(void)
 					clk_round_rate(scale3d.clk_3d_emc, UINT_MAX));
 		}
 	}
-#ifdef CONFIG_TRIPNDROID_FRAMEWORK
-}
-#endif
+
 	t = ktime_get();
 
 	hz = clk_get_rate(scale3d.clk_3d);
@@ -466,10 +465,9 @@ static void scaling_state_check(ktime_t time)
 		scale3d.fast_responses++;
 		scale3d.fast_frame = time;
 		/* if too busy, scale up */
-#ifdef CONFIG_TRIPNDROID_FRAMEWORK
-		if ((!powersaving_active) && idleness < scale3d.idle_min) {
-#else
 		if (idleness < scale3d.idle_min) {
+#ifdef CONFIG_TRIPNDROID_FRAMEWORK
+if (powersaving_active != 1) {
 #endif
 			scale3d.is_scaled = 0;
 			scale3d.fast_up_count++;
@@ -480,6 +478,9 @@ static void scaling_state_check(ktime_t time)
 			reset_3d_clocks();
 			reset_scaling_counters(time);
 			return;
+#ifdef CONFIG_TRIPNDROID_FRAMEWORK
+}
+#endif
 		}
 		scale3d.idle_short_term_total = 0;
 		scale3d.last_short_term_idle = time;
@@ -494,14 +495,10 @@ static void scaling_state_check(ktime_t time)
 				scale3d.idle_total, idleness);
 
 #ifdef CONFIG_TRIPNDROID_FRAMEWORK
-		if (powersaving_active) {
-			scale3d.idle_max = 0;
-		}
-		else {
-			scale3d.idle_max = scale3d.idle_max;
-		}
+	if (powersaving_active == 1) {
+		idleness = 20;
+	}
 #endif
-
 		if (idleness > scale3d.idle_max) {
 			if (!scale3d.is_scaled) {
 				scale3d.is_scaled = 1;
@@ -626,20 +623,11 @@ static void do_scale(int diff)
 	if (tegra_get_chipid() == TEGRA_CHIPID_TEGRA3)
 		clk_set_rate(scale3d.clk_3d2, 0);
 
-#ifdef CONFIG_TRIPNDROID_FRAMEWORK
-		if (powersaving_active == 1 && tdf_suspend_state == 0) {
-			clk_set_rate(scale3d.clk_3d, 200000000);
-		}
-		else {
-#endif
 	if (is_tegra_camera_on())
 		clk_set_rate(scale3d.clk_3d, CAMERA_3D_CLK);
 	else
 		clk_set_rate(scale3d.clk_3d, hz);
 
-#ifdef CONFIG_TRIPNDROID_FRAMEWORK
-}
-#endif
 	if (scale3d.p_scale_emc) {
 		long after = (long) clk_get_rate(scale3d.clk_3d);
 		hz = after * scale3d.emc_slope + scale3d.emc_offset;
