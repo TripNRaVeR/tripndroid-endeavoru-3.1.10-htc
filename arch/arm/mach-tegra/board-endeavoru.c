@@ -170,19 +170,18 @@ static struct tegra_thermal_data thermal_data = {
 static struct led_i2c_config lp5521_led_config[] = {
 	{
 		.name = "amber",
-                .led_cur = 95,
-                .led_lux = 100
+		.led_cur = 85,
+		.led_lux = 45,
 	},
 	{
 		.name = "green",
-                .led_cur = 95,
-                .led_lux = 100
+		.led_cur = 85,
+		.led_lux = 55,
 	},
 	{
 		.name = "button-backlight",
-                .led_cur = 2,
-                .led_lux = 55,
-
+		.led_cur = 35,
+		.led_lux = 25,
 	},
 };
 static struct led_i2c_platform_data led_data = {
@@ -199,20 +198,6 @@ static struct i2c_board_info i2c_led_devices[] = {
 };
 static void leds_lp5521_init(void)
 {
-	int ret ;
-	ret = gpio_request(TEGRA_GPIO_PY1, "led_trigger");
-        if (ret < 0){
-                pr_err("[LED] %s: gpio_request failed for gpio %s\n",
-                        __func__, "LED TRIGGER");
-	}
-        ret = gpio_direction_output(TEGRA_GPIO_PY1, 0);
-        if (ret < 0) {
-                pr_err("[LED] %s: gpio_direction_output failed %d\n", __func__, ret);
-                gpio_free(TEGRA_GPIO_PY1);
-                return;
-        }
-	tegra_gpio_enable(TEGRA_GPIO_PY1);
-
 	i2c_register_board_info(1, i2c_led_devices,
 		ARRAY_SIZE(i2c_led_devices));
 }
