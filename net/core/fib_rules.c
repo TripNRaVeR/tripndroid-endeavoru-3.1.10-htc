@@ -26,13 +26,6 @@ int fib_default_rule_add(struct fib_rules_ops *ops,
 {
 	struct fib_rule *r;
 
-#ifdef FIB_RULE_DEBUG
-	if (!(IS_ERR(ops) || (!ops)))
-		printk(KERN_DEBUG "[NET][CORE][RULE] %s ,owner=%s\n", __func__,ops->owner->name);
-	else
-		printk(KERN_DEBUG "[NET][CORE][RULE] %s\n", __func__);
-#endif
-
 	r = kzalloc(ops->rule_size, GFP_KERNEL);
 	if (r == NULL)
 		return -ENOMEM;
@@ -56,13 +49,6 @@ u32 fib_default_rule_pref(struct fib_rules_ops *ops)
 	struct list_head *pos;
 	struct fib_rule *rule;
 
-#ifdef FIB_RULE_DEBUG
-	if (!(IS_ERR(ops) || (!ops)))
-		printk(KERN_DEBUG "[NET][CORE][RULE] %s ,owner=%s\n", __func__,ops->owner->name);
-	else
-		printk(KERN_DEBUG "[NET][CORE][RULE] %s\n", __func__);
-#endif
-
 	if (!list_empty(&ops->rules_list)) {
 		pos = ops->rules_list.next;
 		if (pos->next != &ops->rules_list) {
@@ -84,9 +70,6 @@ static struct fib_rules_ops *lookup_rules_ops(struct net *net, int family)
 {
 	struct fib_rules_ops *ops;
 
-#ifdef FIB_RULE_DEBUG
-	printk(KERN_DEBUG "[NET][CORE][RULE] %s \n", __func__);
-#endif
 	rcu_read_lock();
 	list_for_each_entry_rcu(ops, &net->rules_ops, list) {
 		if (ops->family == family) {
@@ -103,24 +86,12 @@ static struct fib_rules_ops *lookup_rules_ops(struct net *net, int family)
 
 static void rules_ops_put(struct fib_rules_ops *ops)
 {
-#ifdef FIB_RULE_DEBUG
-	if (!(IS_ERR(ops) || (!ops)))
-		printk(KERN_DEBUG "[NET][CORE][RULE] %s ,owner=%s\n", __func__,ops->owner->name);
-	else
-		printk(KERN_DEBUG "[NET][CORE][RULE] %s\n", __func__);
-#endif
 	if (ops)
 		module_put(ops->owner);
 }
 
 static void flush_route_cache(struct fib_rules_ops *ops)
 {
-#ifdef FIB_RULE_DEBUG
-	if (!(IS_ERR(ops) || (!ops)))
-		printk(KERN_DEBUG "[NET][CORE][RULE] %s ,owner=%s\n", __func__,ops->owner->name);
-	else
-		printk(KERN_DEBUG "[NET][CORE][RULE] %s\n", __func__);
-#endif
 	if (ops->flush_cache)
 		ops->flush_cache(ops);
 }
@@ -130,13 +101,6 @@ static int __fib_rules_register(struct fib_rules_ops *ops)
 	int err = -EEXIST;
 	struct fib_rules_ops *o;
 	struct net *net;
-
-#ifdef FIB_RULE_DEBUG
-	if (!(IS_ERR(ops) || (!ops)))
-		printk(KERN_DEBUG "[NET][CORE][RULE] %s ,owner=%s\n", __func__,ops->owner->name);
-	else
-		printk(KERN_DEBUG "[NET][CORE][RULE] %s \n", __func__);
-#endif
 
 	net = ops->fro_net;
 
@@ -168,10 +132,6 @@ fib_rules_register(const struct fib_rules_ops *tmpl, struct net *net)
 	struct fib_rules_ops *ops;
 	int err;
 
-#ifdef FIB_RULE_DEBUG
-	printk(KERN_DEBUG "[NET][CORE][RULE] %s \n", __func__);
-#endif
-
 	ops = kmemdup(tmpl, sizeof(*ops), GFP_KERNEL);
 	if (ops == NULL)
 		return ERR_PTR(-ENOMEM);
@@ -193,13 +153,6 @@ static void fib_rules_cleanup_ops(struct fib_rules_ops *ops)
 {
 	struct fib_rule *rule, *tmp;
 
-#ifdef FIB_RULE_DEBUG
-	if (!(IS_ERR(ops) || (!ops)))
-		printk(KERN_DEBUG "[NET][CORE][RULE] %s ,owner=%s\n", __func__,ops->owner->name);
-	else
-		printk(KERN_DEBUG "[NET][CORE][RULE] %s\n", __func__);
-#endif
-
 	list_for_each_entry_safe(rule, tmp, &ops->rules_list, list) {
 		list_del_rcu(&rule->list);
 		fib_rule_put(rule);
@@ -211,10 +164,6 @@ static void fib_rules_put_rcu(struct rcu_head *head)
 	struct fib_rules_ops *ops = container_of(head, struct fib_rules_ops, rcu);
 	struct net *net = ops->fro_net;
 
-#ifdef FIB_RULE_DEBUG
-	printk(KERN_DEBUG "[NET][CORE][RULE] %s \n", __func__);
-#endif
-
 	release_net(net);
 	kfree(ops);
 }
@@ -222,13 +171,6 @@ static void fib_rules_put_rcu(struct rcu_head *head)
 void fib_rules_unregister(struct fib_rules_ops *ops)
 {
 	struct net *net = ops->fro_net;
-
-#ifdef FIB_RULE_DEBUG
-	if (!(IS_ERR(ops) || (!ops)))
-		printk(KERN_DEBUG "[NET][CORE][RULE] %s ,owner=%s\n", __func__,ops->owner->name);
-	else
-		printk(KERN_DEBUG "[NET][CORE][RULE] %s\n", __func__);
-#endif
 
 	spin_lock(&net->rules_mod_lock);
 	list_del_rcu(&ops->list);
@@ -243,11 +185,6 @@ static int fib_rule_match(struct fib_rule *rule, struct fib_rules_ops *ops,
 			  struct flowi *fl, int flags)
 {
 	int ret = 0;
-
-#ifdef FIB_RULE_DEBUG
-	//if (!(IS_ERR(ops) || (!ops)))
-	//printk(KERN_DEBUG "[NET][CORE][RULE] %s ,owner=%s\n", __func__,ops->owner->name);
-#endif
 
 	if (rule->iifindex && (rule->iifindex != fl->flowi_iif))
 		goto out;
@@ -268,10 +205,6 @@ int fib_rules_lookup(struct fib_rules_ops *ops, struct flowi *fl,
 {
 	struct fib_rule *rule;
 	int err;
-
-#ifdef FIB_RULE_DEBUG
-	//printk(KERN_DEBUG "[NET][CORE][RULE] %s \n", __func__);
-#endif
 
 	rcu_read_lock();
 
@@ -318,11 +251,6 @@ static int validate_rulemsg(struct fib_rule_hdr *frh, struct nlattr **tb,
 {
 	int err = -EINVAL;
 
-#ifdef FIB_RULE_DEBUG
-	if (!(IS_ERR(ops) || (!ops)))
-		printk(KERN_DEBUG "[NET][CORE][RULE] %s ,owner=%s\n", __func__,ops->owner->name);
-#endif
-
 	if (frh->src_len)
 		if (tb[FRA_SRC] == NULL ||
 		    frh->src_len > (ops->addr_size * 8) ||
@@ -348,10 +276,6 @@ static int fib_nl_newrule(struct sk_buff *skb, struct nlmsghdr* nlh, void *arg)
 	struct fib_rule *rule, *r, *last = NULL;
 	struct nlattr *tb[FRA_MAX+1];
 	int err = -EINVAL, unresolved = 0;
-
-#ifdef FIB_RULE_DEBUG
-	printk(KERN_DEBUG "[NET][CORE][RULE] %s \n", __func__);
-#endif
 
 	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*frh)))
 		goto errout;
@@ -502,10 +426,6 @@ static int fib_nl_delrule(struct sk_buff *skb, struct nlmsghdr* nlh, void *arg)
 	struct nlattr *tb[FRA_MAX+1];
 	int err = -EINVAL;
 
-#ifdef FIB_RULE_DEBUG
-	printk(KERN_DEBUG "[NET][CORE][RULE] %s \n", __func__);
-#endif
-
 	if (nlh->nlmsg_len < nlmsg_msg_size(sizeof(*frh)))
 		goto errout;
 
@@ -606,10 +526,6 @@ static inline size_t fib_rule_nlmsg_size(struct fib_rules_ops *ops,
 			 + nla_total_size(4) /* FRA_FWMARK */
 			 + nla_total_size(4); /* FRA_FWMASK */
 
-#ifdef FIB_RULE_DEBUG
-	printk(KERN_DEBUG "[NET][CORE][RULE] %s \n", __func__);
-#endif
-
 	if (ops->nlmsg_payload)
 		payload += ops->nlmsg_payload(rule);
 
@@ -622,11 +538,6 @@ static int fib_nl_fill_rule(struct sk_buff *skb, struct fib_rule *rule,
 {
 	struct nlmsghdr *nlh;
 	struct fib_rule_hdr *frh;
-
-#ifdef FIB_RULE_DEBUG
-	if (!(IS_ERR(ops) || (!ops)))
-		printk(KERN_DEBUG "[NET][CORE][RULE] %s ,owner=%s\n", __func__,ops->owner->name);
-#endif
 
 	nlh = nlmsg_put(skb, pid, seq, type, sizeof(*frh), flags);
 	if (nlh == NULL)
@@ -687,11 +598,6 @@ static int dump_rules(struct sk_buff *skb, struct netlink_callback *cb,
 	int idx = 0;
 	struct fib_rule *rule;
 
-#ifdef FIB_RULE_DEBUG
-	if (!(IS_ERR(ops) || (!ops)))
-		printk(KERN_DEBUG "[NET][CORE][RULE] %s ,owner=%s\n", __func__,ops->owner->name);
-#endif
-
 	rcu_read_lock();
 	list_for_each_entry_rcu(rule, &ops->rules_list, list) {
 		if (idx < cb->args[1])
@@ -716,10 +622,6 @@ static int fib_nl_dumprule(struct sk_buff *skb, struct netlink_callback *cb)
 	struct net *net = sock_net(skb->sk);
 	struct fib_rules_ops *ops;
 	int idx = 0, family;
-
-#ifdef FIB_RULE_DEBUG
-	printk(KERN_DEBUG "[NET][CORE][RULE] %s \n", __func__);
-#endif
 
 	family = rtnl_msg_family(cb->nlh);
 	if (family != AF_UNSPEC) {
@@ -757,11 +659,6 @@ static void notify_rule_change(int event, struct fib_rule *rule,
 	struct sk_buff *skb;
 	int err = -ENOBUFS;
 
-#ifdef FIB_RULE_DEBUG
-	if (!(IS_ERR(ops) || (!ops)))
-		printk(KERN_DEBUG "[NET][CORE][RULE] %s ,owner=%s\n", __func__,ops->owner->name);
-#endif
-
 	net = ops->fro_net;
 	skb = nlmsg_new(fib_rule_nlmsg_size(ops, rule), GFP_KERNEL);
 	if (skb == NULL)
@@ -786,10 +683,6 @@ static void attach_rules(struct list_head *rules, struct net_device *dev)
 {
 	struct fib_rule *rule;
 
-#ifdef FIB_RULE_DEBUG
-	printk(KERN_DEBUG "[NET][CORE][RULE] %s \n", __func__);
-#endif
-
 	list_for_each_entry(rule, rules, list) {
 		if (rule->iifindex == -1 &&
 		    strcmp(dev->name, rule->iifname) == 0)
@@ -803,10 +696,6 @@ static void attach_rules(struct list_head *rules, struct net_device *dev)
 static void detach_rules(struct list_head *rules, struct net_device *dev)
 {
 	struct fib_rule *rule;
-
-#ifdef FIB_RULE_DEBUG
-	printk(KERN_DEBUG "[NET][CORE][RULE] %s \n", __func__);
-#endif
 
 	list_for_each_entry(rule, rules, list) {
 		if (rule->iifindex == dev->ifindex)
@@ -825,10 +714,6 @@ static int fib_rules_event(struct notifier_block *this, unsigned long event,
 	struct fib_rules_ops *ops;
 
 	ASSERT_RTNL();
-
-#ifdef FIB_RULE_DEBUG
-	//printk(KERN_DEBUG "[NET][CORE][RULE] %s event=%lu\n", __func__,event);
-#endif
 
 	switch (event) {
 	case NETDEV_REGISTER:
@@ -851,11 +736,6 @@ static struct notifier_block fib_rules_notifier = {
 
 static int __net_init fib_rules_net_init(struct net *net)
 {
-
-#ifdef FIB_RULE_DEBUG
-	printk(KERN_DEBUG "[NET][CORE][RULE] %s \n", __func__);
-#endif
-
 	INIT_LIST_HEAD(&net->rules_ops);
 	spin_lock_init(&net->rules_mod_lock);
 	return 0;
@@ -868,10 +748,6 @@ static struct pernet_operations fib_rules_net_ops = {
 static int __init fib_rules_init(void)
 {
 	int err;
-
-#ifdef FIB_RULE_DEBUG
-	printk(KERN_DEBUG "[NET][CORE][RULE] %s \n", __func__);
-#endif
 
 	rtnl_register(PF_UNSPEC, RTM_NEWRULE, fib_nl_newrule, NULL, NULL);
 	rtnl_register(PF_UNSPEC, RTM_DELRULE, fib_nl_delrule, NULL, NULL);
