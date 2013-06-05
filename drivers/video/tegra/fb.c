@@ -781,6 +781,7 @@ struct tegra_fb_info *tegra_fb_register(struct nvhost_device *ndev,
 	info->var.hsync_len		= 0;
 	info->var.vsync_len		= 0;
 	info->var.vmode			= FB_VMODE_NONINTERLACED;
+	info->var.reserved[3] = 60;
 
 	win->x.full = dfixed_const(0);
 	win->y.full = dfixed_const(0);
