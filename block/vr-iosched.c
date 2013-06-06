@@ -40,11 +40,11 @@ enum vr_head_dir {
 	BACKWARD,
 };
 
-static const int sync_expire = HZ / 3;  /* max time before a sync is submitted. */
-static const int async_expire = 6 * HZ; /* ditto for async, these limits are SOFT! */
+static const int sync_expire = 2 * HZ;  /* max time before a sync is submitted. */
+static const int async_expire = 8 * HZ; /* ditto for async, these limits are SOFT! */
 static const int fifo_batch = 8;	/* # of sequential requests treated as one
 					   by the above parameters. For throughput. */
-static const int rev_penalty = 10;	/* penalty for reversing head direction */
+static const int rev_penalty = 4;	/* penalty for reversing head direction */
 
 struct vr_data {
 	struct rb_root sort_list;
