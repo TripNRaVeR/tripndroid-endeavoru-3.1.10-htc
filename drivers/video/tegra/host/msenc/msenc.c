@@ -307,8 +307,6 @@ clean_up:
 
 void nvhost_msenc_init(struct nvhost_device *dev)
 {
-	struct nvhost_device_data *pdata =
-		(struct nvhost_device_data *)dev->dev.platform_data;
 	int err = 0;
 	struct msenc *m;
 	char *fw_name;
