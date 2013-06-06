@@ -1984,9 +1984,6 @@ static void _tegra_dc_controller_disable(struct tegra_dc *dc)
 	tegra_dc_writel(dc, 0, DC_CMD_INT_ENABLE);
 	disable_irq(dc->irq);
 
-	tegra_dc_clear_bandwidth(dc);
-	tegra_dc_clk_disable(dc);
-
 	if (dc->out && dc->out->disable)
 		dc->out->disable();
 
@@ -2009,6 +2006,9 @@ static void _tegra_dc_controller_disable(struct tegra_dc *dc)
 		}
 	}
 	trace_printk("%s:disabled\n", dc->ndev->name);
+
+	tegra_dc_clear_bandwidth(dc);
+	tegra_dc_clk_disable(dc);
 }
 
 void tegra_dc_stats_enable(struct tegra_dc *dc, bool enable)
