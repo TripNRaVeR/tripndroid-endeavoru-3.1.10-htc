@@ -750,7 +750,7 @@ static int tegra_dc_ext_set_lut(struct tegra_dc_ext_user *user,
 	return 0;
 }
 
-#ifdef CONFIG_ARCH_TEGRA_3x_SOC
+#ifdef CONFIG_TEGRA_DC_CMU
 static int tegra_dc_ext_set_cmu(struct tegra_dc_ext_user *user,
 				struct tegra_dc_ext_cmu *args)
 {
@@ -936,7 +936,7 @@ static long tegra_dc_ioctl(struct file *filp, unsigned int cmd,
 
 	case TEGRA_DC_EXT_SET_CMU:
 	{
-#ifdef CONFIG_ARCH_TEGRA_3x_SOC
+#ifdef CONFIG_TEGRA_DC_CMU
 		int ret;
 		struct tegra_dc_ext_cmu *args;
 
