@@ -1050,36 +1050,6 @@ static struct attribute_group Aproj_properties_attr_group_XC = {
 #define TOUCH_GPIO_RST TEGRA_GPIO_PF3
 #define TOUCH_GPIO_PWD TEGRA_GPIO_PY2
 
-static struct regulator *srio_1v8_en;
-
-static int powerfun(int enable)
-{
-	int ret = 0;
-	if(enable >= 2){
-	}
-	else
-	{
-		if (srio_1v8_en == NULL) {
-			srio_1v8_en = regulator_get(NULL, "v_srio_1v8");
-			if (WARN_ON(IS_ERR(srio_1v8_en))) {
-				pr_err("[srio_1v8] %s: couldn't get regulator srio_1v8_en: %ld\n",
-						__func__, PTR_ERR(srio_1v8_en));
-				ret = -1;
-				goto exit;
-			}
-		}
-		if(enable){
-			ret = regulator_enable(srio_1v8_en);
-			mdelay(10);
-		}else{
-			ret = regulator_disable(srio_1v8_en);
-		}
-	}
-exit:
-	return ret;
-
-}
-
 static struct synaptics_i2c_rmi_platform_data edge_ts_3k_data_XB[] = {
 	{
 		.version = 0x3332, /* fw32 */
@@ -1091,7 +1061,6 @@ static struct synaptics_i2c_rmi_platform_data edge_ts_3k_data_XB[] = {
 		.display_width = 720,
 		.display_height = 1280,
 		.gpio_irq = TOUCH_GPIO_IRQ,
-		.power = powerfun,
 		.report_type = SYN_AND_REPORT_TYPE_A,
 		.reduce_report_level = {60, 60, 50, 0, 0},
 		.default_config = 2,
@@ -1148,7 +1117,6 @@ static struct synaptics_i2c_rmi_platform_data edge_ts_3k_data_XB[] = {
 		.abs_y_min = 0,
 		.abs_y_max = 1770,
 		.gpio_irq = TOUCH_GPIO_IRQ,
-		.power = powerfun,
 		.default_config = 2,
 		.large_obj_check = 1,
 		.tw_pin_mask = 0x0080,
@@ -1197,7 +1165,6 @@ static struct synaptics_i2c_rmi_platform_data edge_ts_3k_data_XB[] = {
 		.abs_y_min = 0,
 		.abs_y_max = 1770,
 		.gpio_irq = TOUCH_GPIO_IRQ,
-		.power = powerfun,
 		.default_config = 2,
 		.large_obj_check = 1,
 		.tw_pin_mask = 0x0080,
@@ -1247,7 +1214,6 @@ static struct synaptics_i2c_rmi_platform_data edge_ts_3k_data_XB[] = {
 		.flags = SYNAPTICS_FLIP_Y,
 		.gpio_irq = TOUCH_GPIO_IRQ,
 		.default_config = 1,
-		.power = powerfun,
 		.tw_pin_mask = 0x0080,
 		.sensor_id = 0x0080 | SENSOR_ID_CHECKING_EN, /* YFO */
 		.config = {
@@ -1283,7 +1249,6 @@ static struct synaptics_i2c_rmi_platform_data edge_ts_3k_data_XB[] = {
 		.abs_y_min = 0,
 		.abs_y_max = 1770,
 		.gpio_irq = TOUCH_GPIO_IRQ,
-		.power = powerfun,
 		.tw_pin_mask = 0x0080,
 		.sensor_id = 0x0000 | SENSOR_ID_CHECKING_EN, /* wintek */
 		.config = {
