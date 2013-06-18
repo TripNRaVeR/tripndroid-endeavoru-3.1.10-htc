@@ -177,7 +177,7 @@ enum {
 	DEFINE_REG(TEGRA_EMC_BASE, EMC_FBIO_SPARE),		\
 	DEFINE_REG(TEGRA_EMC_BASE, EMC_CFG_RSV),
 
-#define DEFINE_REG(base, reg) ((base) ? ((u32)IO_ADDRESS((base)) + (reg)) : 0)
+#define DEFINE_REG(base, reg) ((base) ? (IO_ADDRESS((base)) + (reg)) : 0)
 static const u32 burst_reg_addr[TEGRA_EMC_NUM_REGS] = {
 	BURST_REG_LIST
 };
@@ -229,21 +229,21 @@ static void __iomem *clk_base = IO_ADDRESS(TEGRA_CLK_RESET_BASE);
 
 static inline void emc_writel(u32 val, unsigned long addr)
 {
-	writel(val, (u32)emc_base + addr);
+	writel(val, emc_base + addr);
 	barrier();
 }
 static inline u32 emc_readl(unsigned long addr)
 {
-	return readl((u32)emc_base + addr);
+	return readl(emc_base + addr);
 }
 static inline void mc_writel(u32 val, unsigned long addr)
 {
-	writel(val, (u32)mc_base + addr);
+	writel(val, mc_base + addr);
 	barrier();
 }
 static inline u32 mc_readl(unsigned long addr)
 {
-	return readl((u32)mc_base + addr);
+	return readl(mc_base + addr);
 }
 
 static void emc_last_stats_update(int last_sel)
@@ -504,7 +504,7 @@ static inline void do_clock_change(u32 clk_setting)
 	int err;
 
 	mc_readl(MC_EMEM_ADR_CFG);	/* completes prev writes */
-	writel(clk_setting, (u32)clk_base + emc->reg);
+	writel(clk_setting, clk_base + emc->reg);
 	readl((u32)clk_base + emc->reg);/* completes prev write */
 
 	err = wait_for_update(EMC_INTSTATUS,
