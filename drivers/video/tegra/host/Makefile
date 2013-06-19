@@ -24,7 +24,6 @@ obj-$(CONFIG_TEGRA_GRHOST) += gr2d/
 obj-$(CONFIG_TEGRA_GRHOST) += isp/
 obj-$(CONFIG_TEGRA_GRHOST) += vi/
 obj-$(CONFIG_TEGRA_GRHOST) += nvhost.o
-obj-$(CONFIG_TEGRA_GRHOST) += msenc/
 
 obj-$(CONFIG_TEGRA_GRHOST_USE_NVMAP) += nvmap.o
 obj-$(CONFIG_TEGRA_GRHOST_USE_DMABUF) += dmabuf.o
