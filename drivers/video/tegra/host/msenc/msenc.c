@@ -54,10 +54,9 @@ static char *msenc_get_fw_name(struct nvhost_device *dev)
 	if (maj == 2) {
 		/* there are no minor versions so far for maj==2 */
 		sprintf(fw_name, "nvhost_msenc02.fw");
-	} else {
-		kfree(fw_name);
-		return NULL;
 	}
+	else
+		return NULL;
 
 	dev_info(&dev->dev, "fw name:%s\n", fw_name);
 
