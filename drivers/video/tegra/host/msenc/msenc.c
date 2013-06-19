@@ -336,7 +336,7 @@ void nvhost_msenc_init(struct nvhost_device *dev)
 		goto clean_up;
 	}
 
-	if (!&dev->can_powergate) {
+	if (!pdata->can_powergate) {
 		nvhost_module_busy(dev);
 		msenc_boot(dev);
 		nvhost_module_idle(dev);
