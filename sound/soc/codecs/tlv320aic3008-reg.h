@@ -30,6 +30,18 @@ static CODEC_SPI_CMD ADC_UNMUTE[] =
 	{'w', 0x52, 0x00},
 };
 
+static CODEC_SPI_CMD ADC_MUTE_VOIP[] =
+{
+	{'w', 0x00, 0x04},
+	{'w', 0x43, 0x00},
+};
+
+static CODEC_SPI_CMD ADC_UNMUTE_VOIP[] =
+{
+	{'w', 0x00, 0x04},
+	{'w', 0x43, 0x02},
+};
+
 static CODEC_SPI_CMD BT_MIC_MUTE[] =
 {
 	{'w', 0x00, 0x04},
