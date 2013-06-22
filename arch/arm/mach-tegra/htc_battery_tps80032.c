@@ -334,7 +334,11 @@ static void tps80032_int_notifier_func(int int_reg, int value)
 	case CHECK_WATCHDOG:
 		if (htc_batt_info.rep.charging_source == CHARGER_USB) {
 			wake_lock(&htc_batt_info.vbus_wake_lock);
+#ifndef CONFIG_TRIPNDROID_FRAMEWORK
 			if (!!(get_kernel_flag() & ALL_AC_CHARGING))
+#else
+			if (tdf_fast_charge == 1)
+#endif
 				tps80032_charger_set_ctrl(POWER_SUPPLY_ENABLE_FAST_CHARGE);
 			else
 				tps80032_charger_set_ctrl(POWER_SUPPLY_ENABLE_SLOW_CHARGE);
@@ -494,16 +498,17 @@ static void usb_status_notifier_func(int online)
 	switch (online) {
 	case CONNECT_TYPE_USB:
 		BATT_LOG("cable USB");
-#ifndef CONFIG_TRIPNDROID_FRAMEWORK
 		if ( !!(get_kernel_flag() & ALL_AC_CHARGING) ) {
 			BATT_LOG("Debug flag is set to force AC charging, fake as AC");
-#else
-		if (tdf_fast_charge == 1) {
 			htc_batt_info.rep.charging_source = CHARGER_AC;
-			BATT_LOG("TDF: fast_charge is enabled so fake as AC");
-#endif
-		} else
+		} else {
+			if (tdf_fast_charge == 1) {
+			htc_batt_info.rep.charging_source = CHARGER_AC;
+			}
+			else {
 			htc_batt_info.rep.charging_source = CHARGER_USB;
+			}
+		}
 		break;
 	case CONNECT_TYPE_AC:
 		BATT_LOG("cable AC");
