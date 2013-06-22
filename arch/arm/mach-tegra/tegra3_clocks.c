@@ -3109,8 +3109,7 @@ static int tegra3_clk_shared_bus_update(struct clk *bus)
 		 */
 		if (c->u.shared_bus_user.enabled ||
 		    (c->u.shared_bus_user.mode == SHARED_CEILING)) {
-			if (strcmp(c->name, "camera.emc") &&
-				!strcmp(c->name, "3d.emc"))
+			if (!strcmp(c->name, "3d.emc"))
 				emc_bw_efficiency = tegra_emc_bw_efficiency;
 
 			switch (c->u.shared_bus_user.mode) {
