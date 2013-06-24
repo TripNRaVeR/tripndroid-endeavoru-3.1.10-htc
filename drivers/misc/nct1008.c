@@ -80,6 +80,10 @@
 
 #define	hysteresis_throttle	5
 
+#ifdef CONFIG_TRIPNDROID_FRAMEWORK
+extern unsigned int tdf_cpu_temp;
+#endif
+
 static struct nct1008_data *pwr_data;
 static int nct1008_ready = 0;
 static int polling = 1;
@@ -575,6 +579,10 @@ static void nct1008_polling_func(struct work_struct *work)
 	if (value < 0)
 		goto error;
 	temp_local = value_to_temperature(pdata->ext_range, value);
+
+#ifdef CONFIG_TRIPNDROID_FRAMEWORK
+	tdf_cpu_temp = temp_local;
+#endif
 
 	printk(KERN_INFO "[TMS] cpu temp = %d.%d, local temp = %d\n", temp_ext_hi,
 			temp_ext_lo * 25, temp_local);
