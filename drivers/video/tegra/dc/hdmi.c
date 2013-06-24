@@ -838,7 +838,7 @@ static void tegra_dc_hdmi_resume(struct tegra_dc *dc)
 #endif
 }
 
-void hdmi_hdcp_early_suspend()
+void hdmi_hdcp_early_suspend(void)
 {
 	struct tegra_dc *dc_hdmi = tegra_dc_get_dc(1);
 	struct tegra_dc_hdmi_data *hdmi = tegra_dc_get_outdata(dc_hdmi);
@@ -852,7 +852,7 @@ void hdmi_set_hdmi_uevent (int value)
 	//switch_set_state(&hdmi->hpd_switch, value);
 }
 
-void hdmi_hdcp_late_resume()
+void hdmi_hdcp_late_resume(void)
 {
 	struct tegra_dc *dc_hdmi = tegra_dc_get_dc(1);
 	struct tegra_dc_hdmi_data *hdmi = tegra_dc_get_outdata(dc_hdmi);
