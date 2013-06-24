@@ -452,6 +452,7 @@ static inline void tegra_dsi_clk_disable(struct tegra_dc_dsi_data *dsi)
 
 #define DSI_RETRY 5
 
+#if DSI_USE_SYNC_POINTS
 static int tegra_dsi_syncpt(struct tegra_dc_dsi_data *dsi)
 {
 	u32 val;
@@ -516,6 +517,7 @@ static int tegra_dsi_syncpt(struct tegra_dc_dsi_data *dsi)
 fail:
 	return ret;
 }
+#endif
 
 static u32 tegra_dsi_get_hs_clk_rate(struct tegra_dc_dsi_data *dsi)
 {
@@ -2882,7 +2884,10 @@ static int tegra_dsi_enter_ulpm(struct tegra_dc_dsi_data *dsi)
 	mdelay(10);
 #endif
 	dsi->ulpm = true;
+
+#if DSI_USE_SYNC_POINTS
 fail:
+#endif
 	return ret;
 }
 
@@ -2915,7 +2920,9 @@ static int tegra_dsi_exit_ulpm(struct tegra_dc_dsi_data *dsi)
 	val &= ~DSI_HOST_DSI_CONTROL_ULTRA_LOW_POWER(0x3);
 	val |= DSI_HOST_DSI_CONTROL_ULTRA_LOW_POWER(NORMAL);
 	tegra_dsi_writel(dsi, val, DSI_HOST_DSI_CONTROL);
+#if DSI_USE_SYNC_POINTS
 fail:
+#endif
 	return ret;
 
 }
