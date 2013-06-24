@@ -4101,16 +4101,16 @@ static struct tegra_dc_mode endeavor_dsi_modes[] = {
 #else
 		.pclk = 35860000,
 #endif
-		.h_ref_to_sync = 4,
-		.v_ref_to_sync = 1,
-		.h_sync_width = 16,
-		.v_sync_width = 1,
-		.h_back_porch = 29,
-		.v_back_porch = 1,
+		.h_ref_to_sync = 2,
+		.v_ref_to_sync = 2,
+		.h_sync_width = 4,
+		.v_sync_width = 4,
+		.h_back_porch = 100,
+		.v_back_porch = 14,
 		.h_active = 720,
 		.v_active = 1280,
-		.h_front_porch = 55,
-		.v_front_porch = 2,
+		.h_front_porch = 4,
+		.v_front_porch = 4,
 	},
 };
 
