@@ -44,45 +44,36 @@ static void set_throughput_hint(struct work_struct *work)
 	nvhost_scale3d_set_throughput_hint(throughput_hint);
 }
 
-#define MAX_ZERO_FRAME_COUNT 5000
-static int zero_frame_count = 0;
-
 static int throughput_flip_callback(void)
 {
-	target_frame_time = tegra_dc_get_frame_time();
+	long timediff;
+	ktime_t now;
+
 	/* only register flips when a single app is active */
 	if (multiple_app_disable)
 		return NOTIFY_DONE;
-	else {
-		long timediff;
-		ktime_t now;
 
-		now = ktime_get();
-		if (last_flip.tv64 != 0) {
-			timediff = (long) ktime_us_delta(now, last_flip);
-			if (timediff > (long) USHRT_MAX)
-				last_frame_time = USHRT_MAX;
-			else
-				last_frame_time = (unsigned short) timediff;
+	now = ktime_get();
+	if (last_flip.tv64 != 0) {
+		timediff = (long) ktime_us_delta(now, last_flip);
+		if (timediff > (long) USHRT_MAX)
+			last_frame_time = USHRT_MAX;
+		else
+			last_frame_time = (unsigned short) timediff;
 
-			if (last_frame_time == 0) {
-				if (zero_frame_count < MAX_ZERO_FRAME_COUNT) {
-					zero_frame_count ++;
-					if ( (zero_frame_count % 1000) < 50 )
-						pr_warn("%s: flips %lld nsec apart zero_frame_count = %d\n",
-							__func__, now.tv64 - last_flip.tv64, zero_frame_count);
-				}
-				return NOTIFY_DONE;
-			}
-
-			throughput_hint =
-				((int) target_frame_time * 100)/last_frame_time;
-
-			if (!work_pending(&work))
-				schedule_work(&work);
+		if (last_frame_time == 0) {
+			pr_warn("%s: flips %lld nsec apart\n",
+				__func__, now.tv64 - last_flip.tv64);
+			return NOTIFY_DONE;
 		}
-		last_flip = now;
+
+		throughput_hint =
+			((int) target_frame_time * 1000) / last_frame_time;
+
+		if (!work_pending(&work))
+			schedule_work(&work);
 	}
+	last_flip = now;
 
 	return NOTIFY_OK;
 }
@@ -135,12 +126,10 @@ static int throughput_release(struct inode *inode, struct file *file)
 	throughput_active_app_count--;
 	if (throughput_active_app_count == 0) {
 		reset_target_frame_time();
+		multiple_app_disable = 0;
 		callback_initialized = 0;
 		tegra_dc_unset_flip_callback();
 	}
-
-	if (throughput_active_app_count < 2)
-		multiple_app_disable = 0;
 
 	spin_unlock(&lock);
 
