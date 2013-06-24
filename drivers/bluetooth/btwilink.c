@@ -273,11 +273,7 @@ static int ti_st_send_frame(struct sk_buff *skb)
 	 * Freeing skb memory is taken care in shared transport layer,
 	 * so don't free skb memory here.
 	 */
-	if(hst->st_write != NULL)
-		len = hst->st_write(skb);
-	else
-		len = -1;
-
+	len = hst->st_write(skb);
 	if (len < 0) {
 		kfree_skb(skb);
 		BT_ERR("ST write failed (%ld)", len);
