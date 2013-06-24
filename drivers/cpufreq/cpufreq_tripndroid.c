@@ -37,6 +37,7 @@
 extern unsigned int tdf_suspend_state;
 extern unsigned int tdf_cpu_load;
 extern unsigned int powersaving_active;
+extern unsigned int tdf_cpu_temp;
 
 static atomic_t active_count = ATOMIC_INIT(0);
 
@@ -161,8 +162,13 @@ static void cpufreq_tripndroid_timer(unsigned long data)
 	pcpu->policy->max = TDF_FREQ_PWRSAVE_MAX;
 	}
 
+	if ((tdf_cpu_temp > 70) &&
+			(powersaving_active == 0)) {
+	powersaving_active = 1;
+	}
+
 	if ((powersaving_active == 0) &&
-			(tdf_suspend_state == 0)) {
+			(tdf_suspend_state == 0) && (tdf_cpu_temp < 70)) {
 	pcpu->policy->max = hispeed_freq;
 	}
 
