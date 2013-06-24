@@ -51,7 +51,7 @@ u8 tegra_emc_bw_efficiency_boost = 45;
 
 #define EMC_MIN_RATE_DDR3		25500000
 #define EMC_STATUS_UPDATE_TIMEOUT	100
-#define TEGRA_EMC_TABLE_MAX_SIZE 	16
+#define TEGRA_EMC_TABLE_MAX_SIZE	16
 
 enum {
 	DLL_CHANGE_NONE = 0,
@@ -178,7 +178,7 @@ enum {
 	DEFINE_REG(TEGRA_EMC_BASE, EMC_CFG_RSV),
 
 #define DEFINE_REG(base, reg) ((base) ? (IO_ADDRESS((base)) + (reg)) : 0)
-static const u32 burst_reg_addr[TEGRA_EMC_NUM_REGS] = {
+static const void __iomem *burst_reg_addr[TEGRA_EMC_NUM_REGS] = {
 	BURST_REG_LIST
 };
 #undef DEFINE_REG
@@ -254,9 +254,9 @@ static void emc_last_stats_update(int last_sel)
 	spin_lock_irqsave(&emc_stats.spinlock, flags);
 
 	if (emc_stats.last_sel < TEGRA_EMC_TABLE_MAX_SIZE)
-		emc_stats.time_at_clock[emc_stats.last_sel] = cputime64_add(
-			emc_stats.time_at_clock[emc_stats.last_sel],
-			cputime64_sub(cur_jiffies, emc_stats.last_update));
+		emc_stats.time_at_clock[emc_stats.last_sel] =
+			emc_stats.time_at_clock[emc_stats.last_sel] +
+			(cur_jiffies - emc_stats.last_update);
 
 	emc_stats.last_update = cur_jiffies;
 
@@ -504,7 +504,7 @@ static inline void do_clock_change(u32 clk_setting)
 	int err;
 
 	mc_readl(MC_EMEM_ADR_CFG);	/* completes prev writes */
-	writel(clk_setting, clk_base + emc->reg);
+	writel(clk_setting, (u32)clk_base + emc->reg);
 	readl((u32)clk_base + emc->reg);/* completes prev write */
 
 	err = wait_for_update(EMC_INTSTATUS,
