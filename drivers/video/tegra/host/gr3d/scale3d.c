@@ -53,7 +53,7 @@ extern unsigned int tdf_suspend_state;
 #endif
 
 #define POW2(x) ((x) * (x))
-#define CAMERA_3D_CLK 352000000
+#define CAMERA_3D_CLK 300000000
 #define CAMERA_3D_EMC_CLK 437000000
 
 /*
