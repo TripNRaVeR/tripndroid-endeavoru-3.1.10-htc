@@ -239,6 +239,7 @@ int tegra_dc_update_windows(struct tegra_dc_win *windows[], int n)
 	unsigned long update_mask = GENERAL_ACT_REQ;
 	unsigned long win_options;
 	bool update_blend = false;
+	bool is_yuvp = 0;
 	int i;
 
 	dc = windows[0]->dc;
@@ -467,7 +468,6 @@ int tegra_dc_update_windows(struct tegra_dc_win *windows[], int n)
 	if (dc->out->flags & TEGRA_DC_OUT_ONE_SHOT_MODE)
 		mutex_unlock(&dc->one_shot_lock);
 
-	bool is_yuvp = 0;
 	for (i = 0; i < n; i++) {
 		struct tegra_dc_win *win = windows[i];
 		bool yuvp = tegra_dc_is_yuv_planar(win->fmt);
