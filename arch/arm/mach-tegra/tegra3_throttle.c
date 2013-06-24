@@ -27,7 +27,6 @@
 #include <linux/seq_file.h>
 #include <linux/uaccess.h>
 #include <linux/thermal.h>
-#include <media/tegra_camera.h>
 #include <mach/thermal.h>
 
 #include "clock.h"
@@ -58,14 +57,11 @@ static unsigned int clip_to_table(unsigned int cpu_freq)
 	return cpu_freq_table[i].frequency;
 }
 
-/* extern unsigned int no_thermal_throttle_limit; */
-
 unsigned int tegra_throttle_governor_speed(unsigned int requested_speed)
 {
 	struct balanced_throttle *bthrot;
 	unsigned int throttle_speed = requested_speed;
 	int index;
-        unsigned int min_cpu_freq = 640000;
 	unsigned int bthrot_speed;
 	unsigned int lowest_speed;
 	struct cpufreq_frequency_table *cpu_freq_table;
@@ -75,10 +71,7 @@ unsigned int tegra_throttle_governor_speed(unsigned int requested_speed)
 	if (!table_data)
 		return requested_speed;
 
-    /* ignore thermal throttle limitation */
-/*    if (unlikely(no_thermal_throttle_limit))
-		return requested_speed;
-*/
+
 	cpu_freq_table = table_data->freq_table;
 	lowest_speed = cpu_freq_table[table_data->throttle_lowest_index].frequency;
 
@@ -98,9 +91,6 @@ unsigned int tegra_throttle_governor_speed(unsigned int requested_speed)
 		}
 	}
 	mutex_unlock(&bthrot_list_lock);
-
-	if (is_tegra_camera_on())
-		throttle_speed = max(throttle_speed, min_cpu_freq);
 
 	return throttle_speed;
 }
