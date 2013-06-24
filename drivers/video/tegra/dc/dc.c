@@ -63,7 +63,7 @@
 #define DC_COM_PIN_OUTPUT_POLARITY3_INIT_VAL	0x0
 
 extern  atomic_t update_frame;
-extern global_wakeup_state;
+extern int global_wakeup_state;
 extern bool is_resume_from_deep_suspend(void );
 
 spinlock_t dc_spinlock_clk;
