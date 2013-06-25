@@ -26,24 +26,6 @@
 #define AIC3008_MAX_REGS         128
 #define AIC3008_MAX_RETRY        10
 
-/* structures for SPI commands */
-typedef struct _CODEC_SPI_CMD {
-	unsigned char act;
-	unsigned char reg;
-	unsigned char data;
-} CODEC_SPI_CMD;
-
-typedef struct _CODEC_SPI_CMD_PARAM {
-	CODEC_SPI_CMD *data;
-	unsigned int len;
-} CODEC_SPI_CMD_PARAM;
-
-struct AIC3008_PARAM {
-	unsigned int row_num;
-	unsigned int col_num;
-	void *cmd_data;
-};
-
 struct CODEC_CFG {
 	unsigned char tb_idx;
 	unsigned char index;
