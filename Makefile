@@ -347,10 +347,12 @@ CHECK		= sparse
 
 CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
 		  -Wbitwise -Wno-return-void $(CF)
-CFLAGS_MODULE   = -fno-pic -mtune=cortex-a9
+CFLAGS_MODULE   = -fno-pic -mcpu=cortex-a9 -mtune=cortex-a9 -mfpu=neon -ltcmalloc
+CFLAGS_MODULE   = -ftree-loop-if-convert -ftree-loop-if-convert-stores -ftree-loop-distribution -fno-signaling-nans -fivopts -fvariable-expansion-in-unroller
 AFLAGS_MODULE   =
 LDFLAGS_MODULE  =
-CFLAGS_KERNEL	= -mtune=cortex-a9
+CFLAGS_KERNEL	= -mcpu=cortex-a9 -mtune=cortex-a9 -mfpu=neon -ltcmalloc
+CFLAGS_KERNEL	= -ftree-loop-if-convert -ftree-loop-if-convert-stores -ftree-loop-distribution -fno-signaling-nans -fivopts -fvariable-expansion-in-unroller
 AFLAGS_KERNEL	=
 CFLAGS_GCOV	= -fprofile-arcs -ftest-coverage
 
