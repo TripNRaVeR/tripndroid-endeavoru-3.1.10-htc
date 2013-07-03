@@ -41,10 +41,10 @@ enum vr_head_dir {
 };
 
 static const int sync_expire = 2 * HZ;  /* max time before a sync is submitted. */
-static const int async_expire = 8 * HZ; /* ditto for async, these limits are SOFT! */
-static const int fifo_batch = 8;	/* # of sequential requests treated as one
+static const int async_expire = 4 * HZ; /* ditto for async, these limits are SOFT! */
+static const int fifo_batch = 1;	/* # of sequential requests treated as one
 					   by the above parameters. For throughput. */
-static const int rev_penalty = 4;	/* penalty for reversing head direction */
+static const int rev_penalty = 1;	/* penalty for reversing head direction */
 
 struct vr_data {
 	struct rb_root sort_list;
@@ -114,7 +114,7 @@ static void vr_add_request(struct request_queue *q, struct request *rq)
 
 	if (vd->fifo_expire[dir]) {
 		rq_set_fifo_time(rq, jiffies + vd->fifo_expire[dir]);
-		list_add_tail(&rq->queuelist, &vd->fifo_list[dir]);
+		list_add(&rq->queuelist, &vd->fifo_list[dir]);
 	}
 }
 
@@ -128,28 +128,7 @@ static void vr_remove_request(struct request_queue *q, struct request *rq)
 
 static int vr_merge(struct request_queue *q, struct request **rqp, struct bio *bio)
 {
-	sector_t sector = bio->bi_sector + bio_sectors(bio);
-	struct vr_data *vd = vr_get_data(q);
-	struct request *rq = elv_rb_find(&vd->sort_list, sector);
-
-	if (rq && elv_rq_merge_ok(rq, bio)) {
-		*rqp = rq;
-		return ELEVATOR_FRONT_MERGE;
-	}
 	return ELEVATOR_NO_MERGE;
-}
-
-static void vr_merged_request(struct request_queue *q, struct request *req, int type)
-{
-	struct vr_data *vd = vr_get_data(q);
-
-	/*
-	 * if the merge was a front merge, we need to reposition request
-	 */
-	if (type == ELEVATOR_FRONT_MERGE) {
-		vr_del_rq_rb(vd, req);
-		vr_add_rq_rb(vd, req);
-	}
 }
 
 static void vr_merged_requests(struct request_queue *q, struct request *rq,
@@ -209,7 +188,7 @@ static struct request *vr_check_fifo(struct vr_data *vd)
 	struct request *rq_async = vr_expired_request(vd, ASYNC);
 
 	if (rq_async && rq_sync) {
-		if (time_after(rq_fifo_time(rq_async), rq_fifo_time(rq_sync)))
+		if (time_after_eq(rq_fifo_time(rq_async), rq_fifo_time(rq_sync)))
 			return rq_sync;
 	}
 	else if (rq_sync)
@@ -269,12 +248,6 @@ static int vr_dispatch_requests(struct request_queue *q, int force)
 	return 1;
 }
 
-static int vr_queue_empty(struct request_queue *q)
-{
-	struct vr_data *vd = vr_get_data(q);
-	return RB_EMPTY_ROOT(&vd->sort_list);
-}
-
 static void vr_exit_queue(struct elevator_queue *e)
 {
 	struct vr_data *vd = e->elevator_data;
@@ -305,11 +278,9 @@ static void *vr_init_queue(struct request_queue *q)
 static struct elevator_type iosched_vr = {
 	.ops = {
 		.elevator_merge_fn = 		vr_merge,
-		.elevator_merged_fn =		vr_merged_request,
 		.elevator_merge_req_fn =	vr_merged_requests,
 		.elevator_dispatch_fn =		vr_dispatch_requests,
 		.elevator_add_req_fn =		vr_add_request,
-		.elevator_queue_empty_fn =	vr_queue_empty,
 		.elevator_former_req_fn =	elv_rb_former_request,
 		.elevator_latter_req_fn =	elv_rb_latter_request,
 		.elevator_init_fn =		vr_init_queue,
