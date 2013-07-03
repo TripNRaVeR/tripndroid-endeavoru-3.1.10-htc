@@ -919,13 +919,10 @@ int generic_file_fsync(struct file *file, loff_t start, loff_t end,
 		return err;
 
 	mutex_lock(&inode->i_mutex);
-	ret = sync_mapping_buffers(inode->i_mapping);
-	if (!(inode->i_state & I_DIRTY))
-		goto out;
-	if (datasync && !(inode->i_state & I_DIRTY_DATASYNC))
-		goto out;
 
+	ret = sync_mapping_buffers(inode->i_mapping);
 	err = sync_inode_metadata(inode, 1);
+
 	if (ret == 0)
 		ret = err;
 out:
