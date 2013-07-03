@@ -40,11 +40,11 @@ enum vr_head_dir {
 	BACKWARD,
 };
 
-static const int sync_expire = 2 * HZ;  /* max time before a sync is submitted. */
-static const int async_expire = 8 * HZ; /* ditto for async, these limits are SOFT! */
-static const int fifo_batch = 8;	/* # of sequential requests treated as one
+static const int sync_expire = 1 * HZ;  /* max time before a sync is submitted. */
+static const int async_expire = 1 * HZ; /* ditto for async, these limits are SOFT! */
+static const int fifo_batch = 4;	/* # of sequential requests treated as one
 					   by the above parameters. For throughput. */
-static const int rev_penalty = 4;	/* penalty for reversing head direction */
+static const int rev_penalty = 2;	/* penalty for reversing head direction */
 
 struct vr_data {
 	struct rb_root sort_list;
@@ -114,7 +114,7 @@ static void vr_add_request(struct request_queue *q, struct request *rq)
 
 	if (vd->fifo_expire[dir]) {
 		rq_set_fifo_time(rq, jiffies + vd->fifo_expire[dir]);
-		list_add_tail(&rq->queuelist, &vd->fifo_list[dir]);
+		list_add(&rq->queuelist, &vd->fifo_list[dir]);
 	}
 }
 
@@ -209,7 +209,7 @@ static struct request *vr_check_fifo(struct vr_data *vd)
 	struct request *rq_async = vr_expired_request(vd, ASYNC);
 
 	if (rq_async && rq_sync) {
-		if (time_after(rq_fifo_time(rq_async), rq_fifo_time(rq_sync)))
+		if (time_after_eq(rq_fifo_time(rq_async), rq_fifo_time(rq_sync)))
 			return rq_sync;
 	}
 	else if (rq_sync)
