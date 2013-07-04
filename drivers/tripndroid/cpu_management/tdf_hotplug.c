@@ -311,7 +311,7 @@ static void tripndroid_hp_early_suspend(struct early_suspend *handler)
 	}
 	mutex_unlock(&tripndroid_hp_cpu_lock);
 
-	for (i = 1; i < CONFIG_NR_CPUS; i++) {
+	for (i = 1; i < tripndroid_hp_config.max_cpus; i++) {
 		if (cpu_online(i))
 			cpu_down(i);
 
@@ -328,7 +328,7 @@ static void __cpuinit tripndroid_hp_late_resume(struct early_suspend *handler)
 	max_cpus = 2;
 	}
 	else {
-	max_cpus = CONFIG_NR_CPUS;
+	max_cpus = tripndroid_hp_config.max_cpus;
 	}
 
 	mutex_lock(&tripndroid_hp_cpu_lock);
