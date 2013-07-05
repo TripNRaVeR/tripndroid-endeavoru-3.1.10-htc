@@ -309,7 +309,6 @@ static void tripndroid_hp_early_suspend(struct early_suspend *handler)
 	if (!tdf_suspend_state) {
 	tdf_suspend_state = 1;
 	}
-	mutex_unlock(&tripndroid_hp_cpu_lock);
 
 	for (i = 1; i < tripndroid_hp_config.max_cpus; i++) {
 		if (cpu_online(i))
@@ -317,6 +316,7 @@ static void tripndroid_hp_early_suspend(struct early_suspend *handler)
 
 	per_cpu(tripndroid_hp_cpudata, i).online = false;
 	}
+	mutex_unlock(&tripndroid_hp_cpu_lock);
 }
 
 static void __cpuinit tripndroid_hp_late_resume(struct early_suspend *handler)
@@ -335,7 +335,6 @@ static void __cpuinit tripndroid_hp_late_resume(struct early_suspend *handler)
 	if (tdf_suspend_state) {
 	tdf_suspend_state = 0;
 	}
-	mutex_unlock(&tripndroid_hp_cpu_lock);
 
 	for (i = 1; i < max_cpus; i++) {
 		if (!cpu_online(i))
@@ -344,6 +343,7 @@ static void __cpuinit tripndroid_hp_late_resume(struct early_suspend *handler)
 	per_cpu(tripndroid_hp_cpudata, i).online = true;
 	per_cpu(tripndroid_hp_cpudata, i).on_time = ktime_to_ms(ktime_get());
 	}
+	mutex_unlock(&tripndroid_hp_cpu_lock);
 
 	schedule_delayed_work_on(0, &tripndroid_hp_w, msecs_to_jiffies(10));
 }
