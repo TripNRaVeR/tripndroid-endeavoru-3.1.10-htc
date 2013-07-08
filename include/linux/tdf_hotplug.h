@@ -19,3 +19,4 @@
 /* standard defines first */
 #define TRIPNDROID_HP_PAUSE		10000
 #define TRIPNDROID_HP_SAMPLE_MS		20000
+#define TRIPNDROID_HP_DELAY		150

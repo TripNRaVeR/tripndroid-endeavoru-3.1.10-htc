@@ -51,11 +51,13 @@ struct delayed_work tripndroid_hp_w;
 static struct tripndroid_hp {
 	unsigned int sample_ms;
 	unsigned int pause;
+	unsigned int delay;
         unsigned int max_cpus;
         unsigned int min_cpus;
 } tripndroid_hp_config = {
 	.sample_ms = TRIPNDROID_HP_SAMPLE_MS,
 	.pause = TRIPNDROID_HP_PAUSE,
+	.delay = TRIPNDROID_HP_DELAY,
         .max_cpus = CONFIG_NR_CPUS,
         .min_cpus = 1,
 };
@@ -132,21 +134,21 @@ static unsigned int calculate_load(void)
 	unsigned int nr_run, nr_fshift;
 	unsigned int select_threshold;
 
-	if (!powersaving_active) {
-		nr_fshift = 2;
-		select_threshold =  ARRAY_SIZE(normal_thresholds);
-	}
-	else {
+	if (powersaving_active == 1 || tdf_suspend_state == 1) {
 		nr_fshift = 1;
 		select_threshold =  ARRAY_SIZE(powersaving_thresholds);
+	}
+	else {
+		nr_fshift = 2;
+		select_threshold =  ARRAY_SIZE(normal_thresholds);
 	}
 
 	for (nr_run = 1; nr_run < select_threshold; nr_run++) {
 		unsigned int nr_threshold;
-		if (!powersaving_active)
-			nr_threshold = normal_thresholds[nr_run - 1];
-		else
+		if (powersaving_active == 1 || tdf_suspend_state == 1)
 			nr_threshold = powersaving_thresholds[nr_run - 1];
+		else
+			nr_threshold = normal_thresholds[nr_run - 1];
 
 		if (nr_run_last <= nr_run)
 			nr_threshold += (1 << nr_fshift) / nr_run_hysteresis;
@@ -292,7 +294,7 @@ static void tripndroid_hp_wt(struct work_struct *work)
 
 out:
 	if (state != TRIPNDROID_HP_DISABLED) {
-		schedule_delayed_work_on(0, &tripndroid_hp_w, msecs_to_jiffies(100));
+		schedule_delayed_work_on(0, &tripndroid_hp_w, msecs_to_jiffies(tripndroid_hp_config.delay));
         }
 
 	return;
