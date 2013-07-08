@@ -83,8 +83,6 @@ static unsigned long min_sample_time;
 #define DEFAULT_TIMER_RATE 20 * USEC_PER_MSEC
 static unsigned long timer_rate;
 
-static unsigned long boost_factor = 2;
-
 static int cpufreq_governor_tripndroid(struct cpufreq_policy *policy, unsigned int event);
 
 #ifndef CONFIG_CPU_FREQ_DEFAULT_GOV_TRIPNDROID
@@ -157,37 +155,35 @@ static void cpufreq_tripndroid_timer(unsigned long data)
 	if (load_since_change > cpu_load)
 		cpu_load = load_since_change;
 
-	if ((powersaving_active == 1) &&
-			(tdf_suspend_state == 0)) {
-	pcpu->policy->max = TDF_FREQ_PWRSAVE_MAX;
-	}
-
 	if ((tdf_cpu_temp > 70) &&
 			(powersaving_active == 0)) {
 	powersaving_active = 1;
 	}
 
-	if ((powersaving_active == 0) &&
-			(tdf_suspend_state == 0) && (tdf_cpu_temp < 70)) {
-	pcpu->policy->max = hispeed_freq;
-	}
-
 	if (tdf_suspend_state == 1) {
 	pcpu->policy->max = TDF_FREQ_SLEEP_MAX;
+	hispeed_freq = TDF_FREQ_SLEEP_MAX;
 	}
 
 	if (cpu_load >= go_hispeed_load) {
 
-		if (pcpu->policy->cur == pcpu->policy->min) {
+		if (pcpu->target_freq < hispeed_freq &&
+		    hispeed_freq < pcpu->policy->max) {
 			new_freq = hispeed_freq;
-		}
+		} 
 		else {
 
-			if (!boost_factor)
-				new_freq = pcpu->policy->max;
+			new_freq = pcpu->policy->max * cpu_load / 100;
 
-			new_freq = pcpu->policy->cur * boost_factor;
+			if (new_freq < hispeed_freq)
+				new_freq = hispeed_freq;
 
+			if (pcpu->target_freq == hispeed_freq &&
+			    new_freq > hispeed_freq &&
+			    pcpu->timer_run_time < timer_rate) {
+
+				goto rearm;
+			}
 		}
 	}
 	else {
@@ -345,8 +341,20 @@ static int cpufreq_tripndroid_up_task(void *data)
 				struct cpufreq_tripndroid_cpuinfo *pjcpu =
 					&per_cpu(cpuinfo, j);
 
+				if (tdf_suspend_state == 1) {
+					if (pjcpu->target_freq > TDF_FREQ_SLEEP_MAX)
+						pjcpu->target_freq = TDF_FREQ_SLEEP_MAX;
+				}
+
+				if ((powersaving_active == 1) &&
+						(tdf_suspend_state == 0)) {
+					if (pjcpu->target_freq > TDF_FREQ_PWRSAVE_MAX)
+						pjcpu->target_freq = TDF_FREQ_PWRSAVE_MAX;
+				}
+
 				if (pjcpu->target_freq > max_freq)
 					max_freq = pjcpu->target_freq;
+
 			}
 
 			if (max_freq != pcpu->policy->cur)
@@ -391,6 +399,17 @@ static void cpufreq_tripndroid_freq_down(struct work_struct *work)
 		for_each_cpu(j, pcpu->policy->cpus) {
 			struct cpufreq_tripndroid_cpuinfo *pjcpu =
 				&per_cpu(cpuinfo, j);
+
+			if (tdf_suspend_state == 1) {
+				if (pjcpu->target_freq > TDF_FREQ_SLEEP_MAX)
+					pjcpu->target_freq = TDF_FREQ_SLEEP_MAX;
+			}
+
+			if ((powersaving_active == 1) &&
+					(tdf_suspend_state == 0)) {
+				if (pjcpu->target_freq > TDF_FREQ_PWRSAVE_MAX)
+					pjcpu->target_freq = TDF_FREQ_PWRSAVE_MAX;
+			}
 
 			if (pjcpu->target_freq > max_freq)
 				max_freq = pjcpu->target_freq;
