@@ -16,6 +16,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#include <linux/cpu.h>
 #include <linux/cpufreq.h>
 #include <linux/module.h>
 #include <linux/td_framework.h>
@@ -56,6 +57,19 @@ static ssize_t store_powersave_active(struct kobject *a, struct attribute *b,
 		return -EINVAL;
 
 	powersaving_active = value;
+
+	if (value == 1) {
+		if (cpu_online(3))
+			cpu_down(3);
+		if (cpu_online(2))
+			cpu_down(2);
+	}
+	else {
+		if (!cpu_online(2))
+			cpu_up(2);
+		if (!cpu_online(3))
+			cpu_up(3);
+	}
 
 	return count;
 }
