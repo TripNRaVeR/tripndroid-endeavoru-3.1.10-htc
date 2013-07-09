@@ -15,7 +15,7 @@
 #include <linux/kernel.h>
 #include <linux/cpuidle.h>
 #include <linux/pm_qos_params.h>
-#include <linux/module.h>
+#include <linux/moduleparam.h>
 #include <linux/jiffies.h>
 
 #include <asm/io.h>
@@ -153,24 +153,11 @@ static int ladder_enable_device(struct cpuidle_device *dev)
 	return 0;
 }
 
-/**
- * ladder_reflect - update the correct last_state_idx
- * @dev: the CPU
- * @index: the index of actual state entered
- */
-static void ladder_reflect(struct cpuidle_device *dev, int index)
-{
-	struct ladder_device *ldev = &__get_cpu_var(ladder_devices);
-	if (index > 0)
-		ldev->last_state_idx = index;
-}
-
 static struct cpuidle_governor ladder_governor = {
 	.name =		"ladder",
 	.rating =	10,
 	.enable =	ladder_enable_device,
 	.select =	ladder_select_state,
-	.reflect =	ladder_reflect,
 	.owner =	THIS_MODULE,
 };
 
