@@ -11,7 +11,6 @@
 #include <linux/sysfs.h>
 #include <linux/slab.h>
 #include <linux/cpu.h>
-#include <linux/capability.h>
 
 #include "cpuidle.h"
 
@@ -215,52 +214,27 @@ static struct kobj_type ktype_cpuidle = {
 
 struct cpuidle_state_attr {
 	struct attribute attr;
-	ssize_t (*show)(struct cpuidle_state *, \
-					struct cpuidle_state_usage *, char *);
+	ssize_t (*show)(struct cpuidle_state *, char *);
 	ssize_t (*store)(struct cpuidle_state *, const char *, size_t);
 };
 
 #define define_one_state_ro(_name, show) \
 static struct cpuidle_state_attr attr_##_name = __ATTR(_name, 0444, show, NULL)
 
-#define define_one_state_rw(_name, show, store) \
-static struct cpuidle_state_attr attr_##_name = __ATTR(_name, 0644, show, store)
-
 #define define_show_state_function(_name) \
-static ssize_t show_state_##_name(struct cpuidle_state *state, \
-			 struct cpuidle_state_usage *state_usage, char *buf) \
+static ssize_t show_state_##_name(struct cpuidle_state *state, char *buf) \
 { \
 	return sprintf(buf, "%u\n", state->_name);\
 }
 
-#define define_store_state_function(_name) \
-static ssize_t store_state_##_name(struct cpuidle_state *state, \
-		const char *buf, size_t size) \
-{ \
-	long value; \
-	int err; \
-	if (!capable(CAP_SYS_ADMIN)) \
-		return -EPERM; \
-	err = kstrtol(buf, 0, &value); \
-	if (err) \
-		return err; \
-	if (value) \
-		state->disabled = true; \
-	else \
-		state->disabled = false; \
-	return size; \
-}
-
 #define define_show_state_ull_function(_name) \
-static ssize_t show_state_##_name(struct cpuidle_state *state, \
-			struct cpuidle_state_usage *state_usage, char *buf) \
+static ssize_t show_state_##_name(struct cpuidle_state *state, char *buf) \
 { \
-	return sprintf(buf, "%llu\n", state_usage->_name);\
+	return sprintf(buf, "%llu\n", state->_name);\
 }
 
 #define define_show_state_str_function(_name) \
-static ssize_t show_state_##_name(struct cpuidle_state *state, \
-			struct cpuidle_state_usage *state_usage, char *buf) \
+static ssize_t show_state_##_name(struct cpuidle_state *state, char *buf) \
 { \
 	if (state->_name[0] == '\0')\
 		return sprintf(buf, "<null>\n");\
@@ -269,69 +243,46 @@ static ssize_t show_state_##_name(struct cpuidle_state *state, \
 
 define_show_state_function(exit_latency)
 define_show_state_function(power_usage)
-define_show_state_function(target_residency)
 define_show_state_ull_function(usage)
 define_show_state_ull_function(time)
 define_show_state_str_function(name)
 define_show_state_str_function(desc)
-define_show_state_function(disabled)
-define_store_state_function(disabled)
 
 define_one_state_ro(name, show_state_name);
 define_one_state_ro(desc, show_state_desc);
 define_one_state_ro(latency, show_state_exit_latency);
 define_one_state_ro(power, show_state_power_usage);
-define_one_state_ro(residency, show_state_target_residency);
 define_one_state_ro(usage, show_state_usage);
 define_one_state_ro(time, show_state_time);
-define_one_state_rw(disabled, show_state_disabled, store_state_disabled);
 
 static struct attribute *cpuidle_state_default_attrs[] = {
 	&attr_name.attr,
 	&attr_desc.attr,
 	&attr_latency.attr,
 	&attr_power.attr,
-	&attr_residency.attr,
 	&attr_usage.attr,
 	&attr_time.attr,
-	&attr_disabled.attr,
 	NULL
 };
 
 #define kobj_to_state_obj(k) container_of(k, struct cpuidle_state_kobj, kobj)
 #define kobj_to_state(k) (kobj_to_state_obj(k)->state)
-#define kobj_to_state_usage(k) (kobj_to_state_obj(k)->state_usage)
 #define attr_to_stateattr(a) container_of(a, struct cpuidle_state_attr, attr)
 static ssize_t cpuidle_state_show(struct kobject * kobj,
 	struct attribute * attr ,char * buf)
 {
 	int ret = -EIO;
 	struct cpuidle_state *state = kobj_to_state(kobj);
-	struct cpuidle_state_usage *state_usage = kobj_to_state_usage(kobj);
 	struct cpuidle_state_attr * cattr = attr_to_stateattr(attr);
 
 	if (cattr->show)
-		ret = cattr->show(state, state_usage, buf);
-
-	return ret;
-}
-
-static ssize_t cpuidle_state_store(struct kobject *kobj,
-	struct attribute *attr, const char *buf, size_t size)
-{
-	int ret = -EIO;
-	struct cpuidle_state *state = kobj_to_state(kobj);
-	struct cpuidle_state_attr *cattr = attr_to_stateattr(attr);
-
-	if (cattr->store)
-		ret = cattr->store(state, buf, size);
+		ret = cattr->show(state, buf);
 
 	return ret;
 }
 
 static const struct sysfs_ops cpuidle_state_sysfs_ops = {
 	.show = cpuidle_state_show,
-	.store = cpuidle_state_store,
 };
 
 static void cpuidle_state_sysfs_release(struct kobject *kobj)
@@ -370,7 +321,6 @@ int cpuidle_add_state_sysfs(struct cpuidle_device *device)
 		if (!kobj)
 			goto error_state;
 		kobj->state = &device->states[i];
-		kobj->state_usage = &device->states_usage[i];
 		init_completion(&kobj->kobj_unregister);
 
 		ret = kobject_init_and_add(&kobj->kobj, &ktype_state_cpuidle, &device->kobj,

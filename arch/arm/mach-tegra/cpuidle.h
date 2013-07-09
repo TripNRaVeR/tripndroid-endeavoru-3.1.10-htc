@@ -23,49 +23,108 @@
 
 #ifdef CONFIG_PM_SLEEP
 
-extern int tegra_pg_exit_latency;
+extern int tegra_lp2_exit_latency;
 
-struct tegra_cpuidle_ops {
-	bool (*tegra_idle_pd)(struct cpuidle_device *dev,
-				struct cpuidle_state *state);
-	void (*cpu_idle_stats_pd_ready)(unsigned int cpu);
-	void (*cpu_idle_stats_pd_time)(unsigned int cpu, s64 us);
-	bool (*pd_is_allowed)(struct cpuidle_device *dev,
-				struct cpuidle_state *state);
-#ifdef CONFIG_DEBUG_FS
-	int (*pd_debug_show)(struct seq_file *s, void *data);
-#endif
-};
-
-int tegra2_cpuidle_init_soc(struct tegra_cpuidle_ops *ops);
-int tegra3_cpuidle_init_soc(struct tegra_cpuidle_ops *ops);
-
-static inline int tegra_cpuidle_init_soc(struct tegra_cpuidle_ops *ops)
-{
 #ifdef CONFIG_ARCH_TEGRA_2x_SOC
-	return tegra2_cpuidle_init_soc(ops);
+void tegra2_idle_lp2(struct cpuidle_device *dev, struct cpuidle_state *state);
+void tegra2_cpu_idle_stats_lp2_ready(unsigned int cpu);
+void tegra2_cpu_idle_stats_lp2_time(unsigned int cpu, s64 us);
+bool tegra2_lp2_is_allowed(struct cpuidle_device *dev,
+			struct cpuidle_state *state);
+#ifdef CONFIG_DEBUG_FS
+int tegra2_lp2_debug_show(struct seq_file *s, void *data);
+#endif
 #endif
 #ifdef CONFIG_ARCH_TEGRA_3x_SOC
-	return tegra3_cpuidle_init_soc(ops);
+void tegra3_idle_lp2(struct cpuidle_device *dev, struct cpuidle_state *state);
+void tegra3_cpu_idle_stats_lp2_ready(unsigned int cpu);
+void tegra3_cpu_idle_stats_lp2_time(unsigned int cpu, s64 us);
+bool tegra3_lp2_is_allowed(struct cpuidle_device *dev,
+			   struct cpuidle_state *state);
+int tegra3_cpudile_init_soc(void);
+#ifdef CONFIG_DEBUG_FS
+int tegra3_lp2_debug_show(struct seq_file *s, void *data);
+#endif
+#endif
+
+static inline int tegra_cpudile_init_soc(void)
+{
+#ifdef CONFIG_ARCH_TEGRA_2x_SOC
+	return 0;
+#else
+	return tegra3_cpudile_init_soc();
 #endif
 }
 
-static inline void tegra_pd_set_global_latency(struct cpuidle_state *state)
+static inline void tegra_cpu_idle_stats_lp2_ready(unsigned int cpu)
 {
 #ifdef CONFIG_ARCH_TEGRA_2x_SOC
-	state->exit_latency = tegra_pg_exit_latency;
+	tegra2_cpu_idle_stats_lp2_ready(cpu);
+#endif
+#ifdef CONFIG_ARCH_TEGRA_3x_SOC
+	tegra3_cpu_idle_stats_lp2_ready(cpu);
+#endif
+}
+
+static inline void tegra_cpu_idle_stats_lp2_time(unsigned int cpu, s64 us)
+{
+#ifdef CONFIG_ARCH_TEGRA_2x_SOC
+	tegra2_cpu_idle_stats_lp2_time(cpu, us);
+#endif
+#ifdef CONFIG_ARCH_TEGRA_3x_SOC
+	tegra3_cpu_idle_stats_lp2_time(cpu, us);
+#endif
+}
+
+static inline void tegra_idle_lp2(struct cpuidle_device *dev,
+			struct cpuidle_state *state)
+{
+#ifdef CONFIG_ARCH_TEGRA_2x_SOC
+	tegra2_idle_lp2(dev, state);
+#endif
+#ifdef CONFIG_ARCH_TEGRA_3x_SOC
+	tegra3_idle_lp2(dev, state);
+#endif
+}
+
+static inline bool tegra_lp2_is_allowed(struct cpuidle_device *dev,
+			struct cpuidle_state *state)
+{
+#ifdef CONFIG_ARCH_TEGRA_2x_SOC
+	return tegra2_lp2_is_allowed(dev, state);
+#endif
+#ifdef CONFIG_ARCH_TEGRA_3x_SOC
+	return tegra3_lp2_is_allowed(dev, state);
+#endif
+}
+
+static inline void tegra_lp2_set_global_latency(struct cpuidle_state *state)
+{
+#ifdef CONFIG_ARCH_TEGRA_2x_SOC
+	state->exit_latency = tegra_lp2_exit_latency;
 #endif
 	/* Tegra3 does not use global exit latency */
 }
 
-void tegra_pd_update_target_residency(struct cpuidle_state *state);
+void tegra_lp2_update_target_residency(struct cpuidle_state *state);
 
+#ifdef CONFIG_DEBUG_FS
+static inline int tegra_lp2_debug_show(struct seq_file *s, void *data)
+{
+#ifdef CONFIG_ARCH_TEGRA_2x_SOC
+	return tegra2_lp2_debug_show(s, data);
+#endif
+#ifdef CONFIG_ARCH_TEGRA_3x_SOC
+	return tegra3_lp2_debug_show(s, data);
+#endif
+}
+#endif
 #endif /* CONFIG_PM_SLEEP */
 
 #if defined(CONFIG_CPU_IDLE) && defined(CONFIG_PM_SLEEP)
-void tegra_pd_in_idle(bool enable);
+void tegra_lp2_in_idle(bool enable);
 #else
-static inline void tegra_pd_in_idle(bool enable) {}
+static inline void tegra_lp2_in_idle(bool enable) {}
 #endif
 
 #endif
