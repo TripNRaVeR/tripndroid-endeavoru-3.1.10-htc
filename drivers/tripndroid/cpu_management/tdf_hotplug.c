@@ -63,6 +63,7 @@ static struct tripndroid_hp {
 };
 
 static struct clk *cpu_clk;
+static struct clk *cpu_g_clk;
 
 unsigned int state = TRIPNDROID_HP_IDLE;
 
@@ -97,7 +98,11 @@ unsigned int cpu_getspeed(unsigned int cpu)
 	if (cpu >= tripndroid_hp_config.max_cpus || !ACCESS_ONCE(cpu_clk))
 		return 0;
 
-	rate = clk_get_rate(cpu_clk) / 1000;
+	if (tdf_suspend_state == 1)
+		rate = clk_get_rate(cpu_g_clk) / 1000;
+	else
+		rate = clk_get_rate(cpu_clk) / 1000;
+
 	return rate;
 }
 
@@ -351,7 +356,7 @@ static void __cpuinit tripndroid_hp_late_resume(struct early_suspend *handler)
 }
 
 static struct early_suspend tripndroid_hp_early_suspend_struct_driver = {
-	.level = EARLY_SUSPEND_LEVEL_DISABLE_FB + 10,
+	.level = EARLY_SUSPEND_LEVEL_BLANK_SCREEN,
 	.suspend = tripndroid_hp_early_suspend,
 	.resume = tripndroid_hp_late_resume,
 };
@@ -366,6 +371,7 @@ static int __init tripndroid_hp_init(void)
 		sample_ms -= jiffies % sample_ms;
 
 	cpu_clk = clk_get_sys(NULL, "cpu");
+	cpu_g_clk = clk_get_sys(NULL, "cpu_g");
 
 	if (IS_ERR(cpu_clk))
 		return -ENOENT;
