@@ -721,35 +721,6 @@ static ssize_t store_usb_phy_setting(struct device *dev,
 	return otg_store_usb_phy_setting(buf, count);
 }
 #endif
-static ssize_t show_usb_perflock_setting(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	unsigned length;
-	length = sprintf(buf, "Performance lock on gadgets: %s\n",
-		(_android_dev->bEnablePerfLock) ? "on" : "off");
-	return length;
-}
-
-static ssize_t store_usb_perflock_setting(struct device *dev,
-		struct device_attribute *attr,
-		const char *buf, size_t count)
-{
-	unsigned u, enable;
-	ssize_t  ret;
-
-	ret = strict_strtoul(buf, 10, (unsigned long *)&u);
-	if (ret < 0) {
-		USB_ERR("%s: %d\n", __func__, ret);
-		return 0;
-	}
-
-	enable = u ? 1 : 0;
-
-	USB_INFO("performance_lock was %s\n", enable ? "enabled" : "disabled");
-	_android_dev->bEnablePerfLock = enable;
-
-	return count;
-}
 
 #if (defined(CONFIG_USB_OTG) && defined(CONFIG_USB_OTG_HOST))
 void usb_host_status_notifier_func(int isEnable);
@@ -826,8 +797,6 @@ static DEVICE_ATTR(dummy_usb_serial_number, 0644,
 static DEVICE_ATTR(usb_car_kit_enable, 0444, show_usb_car_kit_enable, NULL);
 /*static DEVICE_ATTR(usb_phy_setting, 0664,
 		show_usb_phy_setting, store_usb_phy_setting);*/
-static DEVICE_ATTR(usb_perflock_setting, 0664,
-		show_usb_perflock_setting, store_usb_perflock_setting);
 static DEVICE_ATTR(usb_disable, 0664,
 		NULL, store_usb_disable_setting);
 static DEVICE_ATTR(os_type, 0444, show_os_type, NULL);
@@ -841,7 +810,6 @@ static struct attribute *android_htc_usb_attributes[] = {
 	&dev_attr_dummy_usb_serial_number.attr, /* for MFG */
 	&dev_attr_usb_car_kit_enable.attr,
 	/* &dev_attr_usb_phy_setting.attr, */
-	&dev_attr_usb_perflock_setting.attr,
 	&dev_attr_usb_disable.attr,
 	&dev_attr_os_type.attr,
 	&dev_attr_ats.attr,

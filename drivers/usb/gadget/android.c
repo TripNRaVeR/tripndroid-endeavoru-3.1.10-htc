@@ -163,7 +163,6 @@ struct android_dev {
 	void (*enable_fast_charge)(bool enable);
 	bool RndisDisableMPDecision;
 	int (*match)(int product_id, int intrsharing);
-	bool bEnablePerfLock;
 	int autobot_mode;
 };
 
@@ -336,7 +335,6 @@ static void android_work(struct work_struct *data)
 		kobject_uevent_env(&dev->dev->kobj, KOBJ_CHANGE, uevent_envp);
 		last_uevent = next_state;
 		pr_info("%s", uevent_envp[0]);
-		/* will implement perf lock here*/
 	} else {
 		pr_info("%s: did not send uevent (%d %d %p)\n", __func__,
 			 dev->connected, dev->sw_connected, cdev->config);
@@ -934,7 +932,6 @@ static int mtp_function_init(struct android_usb_function *f, struct usb_composit
 	struct android_dev *dev = _android_dev;
 	int ret;
 	ret = mtp_setup();
-	mtp_setup_perflock(dev->pdata->mtp_perf_lock_on?true:false);
 	return ret;
 }
 
@@ -971,35 +968,12 @@ static int mtp_function_ctrlrequest(struct android_usb_function *f,
 	return mtp_ctrlrequest(cdev, c);
 }
 
-static ssize_t mtp_debug_level_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	return sprintf(buf, "%d\n", htc_mtp_performance_debug);
-}
-
-static ssize_t mtp_debug_level_store(
-		struct device *dev, struct device_attribute *attr,
-		const char *buf, size_t size)
-{
-	if (buf[0] >= '0' && buf[0] <= '9' && buf[1] == '\n')
-		htc_mtp_performance_debug = buf[0] - '0';
-	return size;
-}
-
-static DEVICE_ATTR(mtp_debug_level, S_IRUGO | S_IWUSR, mtp_debug_level_show,
-						    mtp_debug_level_store);
-static struct device_attribute *mtp_function_attributes[] = {
-	&dev_attr_mtp_debug_level,
-	NULL
-};
-
 static struct android_usb_function mtp_function = {
 	.name		= "mtp",
 	.init		= mtp_function_init,
 	.cleanup	= mtp_function_cleanup,
 	.bind_config	= mtp_function_bind_config,
 	.ctrlrequest	= mtp_function_ctrlrequest,
-	.attributes 	= mtp_function_attributes,
 };
 
 /* PTP function is same as MTP with slightly different interface descriptor */

@@ -51,7 +51,6 @@ static struct pm_qos_request_list adb_req_freq;
 static struct pm_qos_request_list adb_req_cpus;
 
 static int adb_release_screen_off_flag;
-static struct work_struct adb_perf_lock_on_work;
 
 struct adb_dev {
 	struct usb_function function;
@@ -74,9 +73,7 @@ struct adb_dev {
 	wait_queue_head_t write_wq;
 	struct usb_request *rx_req;
 	int rx_done;
-	bool adb_perf_lock_on;
 
-	struct timer_list perf_timer;
 	unsigned long timer_expired;
 };
 
@@ -141,39 +138,6 @@ int board_get_usb_ats(void);
 
 #define ADB_TRANSFER_EXPIRED	(jiffies + msecs_to_jiffies(10000))
 void tegra_udc_set_phy_clk(bool pull_up);
-static void adb_setup_perflock(struct work_struct *data)
-{
-	struct adb_dev *dev = _adb_dev;
-
-	/* reset the timer */
-	del_timer(&dev->perf_timer);
-	if (dev->adb_perf_lock_on) {
-		printk(KERN_INFO "[USB][ADB] %s, perf on\n", __func__);
-		if (adb_release_screen_off_flag) {
-			tegra_udc_set_phy_clk(true);
-			adb_release_screen_off_flag = 0;
-		}
-		pm_qos_update_request(&adb_req_freq, (s32)PM_QOS_CPU_USB_FREQ_MAX_DEFAULT_VALUE);
-		pm_qos_update_request(&adb_req_cpus, (s32)PM_QOS_MAX_ONLINE_CPUS_USB_TWO_VALUE);
-
-	} else {
-		printk(KERN_INFO "[USB][ADB] %s, perf off\n", __func__);
-		pm_qos_update_request(&adb_req_freq, (s32)PM_QOS_CPU_FREQ_MIN_DEFAULT_VALUE);
-		pm_qos_update_request(&adb_req_cpus, (s32)PM_QOS_MIN_ONLINE_CPUS_DEFAULT_VALUE);
-		if (!adb_release_screen_off_flag) {
-			adb_release_screen_off_flag = 1;
-			tegra_udc_set_phy_clk(false);
-		}
-	}
-}
-
-static void adb_perf_lock_disable(unsigned long data)
-{
-	struct adb_dev *dev = _adb_dev;
-	dev->adb_perf_lock_on = false;
-	schedule_work(&adb_perf_lock_on_work);
-}
-
 
 static inline struct adb_dev *func_to_adb(struct usb_function *f)
 {
@@ -342,14 +306,6 @@ static ssize_t adb_read(struct file *fp, char __user *buf,
 
 	if (count > ADB_BULK_BUFFER_SIZE)
 		return -EINVAL;
-	else if (count == ADB_BULK_BUFFER_SIZE) {
-		if (!dev->adb_perf_lock_on) {
-			dev->adb_perf_lock_on = true;
-			schedule_work(&adb_perf_lock_on_work);
-		}
-		else
-			mod_timer(&dev->perf_timer, ADB_TRANSFER_EXPIRED);
-	}
 
 	if (adb_lock(&dev->read_excl))
 		return -EBUSY;
@@ -426,14 +382,6 @@ static ssize_t adb_write(struct file *fp, const char __user *buf,
 
 	if (adb_lock(&dev->write_excl))
 		return -EBUSY;
-
-	if (count >= ADB_BULK_BUFFER_SIZE) {
-		if (!dev->adb_perf_lock_on) {
-			dev->adb_perf_lock_on = true;
-			schedule_work(&adb_perf_lock_on_work);
-		} else
-			mod_timer(&dev->perf_timer, ADB_TRANSFER_EXPIRED);
-	}
 
 	while (count > 0) {
 		if (atomic_read(&dev->error)) {
@@ -514,9 +462,6 @@ static int adb_release(struct inode *ip, struct file *fp)
 	printk(KERN_INFO "adb_release: %s(parent:%s): tgid=%d\n",
 			current->comm, current->parent->comm, current->tgid);
 	adb_unlock(&_adb_dev->open_excl);
-
-	_adb_dev->adb_perf_lock_on = false;
-	schedule_work(&adb_perf_lock_on_work);
 
 	return 0;
 }
@@ -725,11 +670,6 @@ static int adb_setup(void)
 	_adb_dev = dev;
 
 	adb_release_screen_off_flag = 1;
-
-	INIT_WORK(&adb_perf_lock_on_work, adb_setup_perflock);
-	pm_qos_add_request(&adb_req_freq, PM_QOS_CPU_FREQ_MIN, (s32)PM_QOS_CPU_FREQ_MIN_DEFAULT_VALUE);
-	pm_qos_add_request(&adb_req_cpus, PM_QOS_MIN_ONLINE_CPUS, (s32)PM_QOS_MIN_ONLINE_CPUS_DEFAULT_VALUE);
-	setup_timer(&dev->perf_timer, adb_perf_lock_disable, (unsigned long)dev);
 
 	ret = misc_register(&adb_device);
 	if (ret)
